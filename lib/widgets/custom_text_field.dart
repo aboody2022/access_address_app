@@ -1,86 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:hugeicons/hugeicons.dart';
-//
-// class CustomTextField extends StatefulWidget {
-//   final String hintText;
-//   final IconData icon;
-//   final bool isPassword;
-//   final TextInputType keyboardType;
-//   final TextEditingController controller; // Add controller
-//   final String? Function(String?)? validator; // Add validator
-//
-//   const CustomTextField({
-//     super.key,
-//     required this.hintText,
-//     required this.icon,
-//     this.isPassword = false,
-//     this.keyboardType = TextInputType.text,
-//     required this.controller, // Require controller
-//     this.validator, // Require validator
-//   });
-//
-//   @override
-//   State<CustomTextField> createState() => _CustomTextFieldState();
-// }
-//
-// class _CustomTextFieldState extends State<CustomTextField> {
-//   bool _obscureText = true;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.grey.withOpacity(0.1),
-//             spreadRadius: 1,
-//             blurRadius: 3,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: TextFormField(
-//         controller: widget.controller, // Set the controller
-//         textAlign: TextAlign.right,
-//         obscureText: widget.isPassword && _obscureText,
-//         keyboardType: widget.keyboardType,
-//         decoration: InputDecoration(
-//           hintText: widget.hintText,
-//           suffixIcon: widget.isPassword
-//               ? IconButton(
-//                   icon: Icon(
-//                     _obscureText ? HugeIcons.strokeRoundedViewOff :  HugeIcons.strokeRoundedView,
-//                     color: Colors.grey,
-//                   ),
-//                   onPressed: () {
-//                     setState(() {
-//                       _obscureText = !_obscureText;
-//                     });
-//                   },
-//                 )
-//               : null,
-//           prefixIcon: Icon(widget.icon, color: Colors.grey),
-//           border: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: BorderSide.none,
-//           ),
-//           filled: true,
-//           fillColor: Colors.white,
-//           contentPadding: const EdgeInsets.symmetric(
-//             horizontal: 16,
-//             vertical: 14,
-//           ),
-//
-//         ),
-//         validator: widget.validator, // Set the validator
-//       ),
-//     );
-//   }
-// }
-
-
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -121,8 +38,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
         boxShadow: [
           BoxShadow(
             color: widget.isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 2),
@@ -130,7 +47,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         ],
         border: Border.all(
           color: widget.isDarkMode
-              ? Colors.white.withOpacity(0.1)
+              ? Colors.white.withValues(alpha:0.1)
               : Colors.transparent,
           width: 1,
         ),
@@ -148,8 +65,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
           hintText: widget.hintText,
           hintStyle: GoogleFonts.cairo(
             color: widget.isDarkMode
-                ? Colors.white.withOpacity(0.5)
-                : Colors.grey.withOpacity(0.8),
+                ? Colors.white.withValues(alpha:0.5)
+                : Colors.grey.withValues(alpha:0.8),
             fontSize: 14,
           ),
           suffixIcon: widget.isPassword
@@ -181,7 +98,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: widget.isDarkMode
-                  ? Colors.white.withOpacity(0.1)
+                  ? Colors.white.withValues(alpha:0.1)
                   : Colors.transparent,
             ),
           ),
@@ -189,7 +106,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: widget.isDarkMode
-                  ? Colors.white.withOpacity(0.2)
+                  ? Colors.white.withValues(alpha:0.2)
                   : const Color(0xFF4CB8C4),
               width: 1.5,
             ),

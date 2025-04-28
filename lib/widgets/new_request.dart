@@ -349,7 +349,7 @@ class _NewRequestModalState extends State<NewRequestModal> {
                     if (_isLoading)
                       Positioned.fill(
                         child: Container(
-                          color: surfaceColor.withOpacity(0.5),
+                          color: surfaceColor.withValues(alpha:0.5),
                           child: const Center(
                             child: SizedBox(
                               width: 20,
@@ -379,7 +379,7 @@ class _NewRequestModalState extends State<NewRequestModal> {
             ),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              backgroundColor: primaryColor.withOpacity(0.1),
+              backgroundColor: primaryColor.withValues(alpha:0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(color: primaryColor),
@@ -430,7 +430,7 @@ class _NewRequestModalState extends State<NewRequestModal> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: isSelected
-            ? primaryColor.withOpacity(widget.isDarkMode ? 0.2 : 0.1)
+            ? primaryColor.withValues(alpha:widget.isDarkMode ? 0.2 : 0.1)
             : surfaceColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(

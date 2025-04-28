@@ -168,7 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                     ),
                     child: Container(
                       color: (isDarkMode ? Colors.black : Colors.white)
-                          .withOpacity(0.1),
+                          .withValues(alpha:0.1),
                     ),
                   ),
                   SafeArea(
@@ -352,7 +352,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                   ),
                   if (_isLoading)
                     Container(
-                      color: (isDarkMode ? Colors.black : Colors.white).withOpacity(0.5),
+                      color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha:0.5),
                       child: Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(

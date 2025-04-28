@@ -330,7 +330,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: shadowColor.withOpacity(0.05),
+            color: shadowColor.withValues(alpha:0.05),
             blurRadius: 2,
             offset: Offset(0, 1),
           ),
@@ -403,7 +403,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
               border: Border.all(color: borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: shadowColor.withOpacity(0.1),
+                  color: shadowColor.withValues(alpha:0.1),
                   blurRadius: 4,
                   offset: Offset(0, 2),
                 ),
@@ -889,8 +889,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
                         padding: EdgeInsets.all(screenWidth * 0.02),
                         decoration: BoxDecoration(
                           color: widget.isDarkMode
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.white.withOpacity(0.7),
+                              ? Colors.black.withValues(alpha:0.3)
+                              : Colors.white.withValues(alpha:0.7),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(

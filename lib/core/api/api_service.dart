@@ -73,7 +73,6 @@ class ApiService {
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       final url = '${ApiConstants.baseUrl}${ApiConstants.login}';
-      print('Trying to connect to: $url'); // للتشخيص
 
       final response = await http.post(
         Uri.parse(url),
@@ -87,8 +86,7 @@ class ApiService {
         }),
       );
 
-      print('Response status: ${response.statusCode}'); // للتشخيص
-      print('Response body: ${response.body}'); // للتشخيص
+
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -96,7 +94,6 @@ class ApiService {
         throw Exception('فشل تسجيل الدخول: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e'); // للتشخيص
       throw Exception('فشل الاتصال بالخادم: $e');
     }
   }

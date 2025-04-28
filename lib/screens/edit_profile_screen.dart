@@ -321,7 +321,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
         color: widget.isDarkMode ? Colors.grey[800] : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha:0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -490,8 +490,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
       ),
       filled: true,
       fillColor: widget.isDarkMode
-          ? Colors.white.withOpacity(0.05)
-          : Colors.white.withOpacity(0.1),
+          ? Colors.white.withValues(alpha:0.05)
+          : Colors.white.withValues(alpha:0.1),
     );
   }
 
