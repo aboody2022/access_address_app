@@ -232,11 +232,15 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                               isDarkMode: isDarkMode,
                               keyboardType: TextInputType.phone,
                               validator: (value) {
-                                if (value?.isEmpty ?? true || !RegExp(r'^\d+$').hasMatch(value!)) {
-                                  return 'الرجاء إدخال رقم هاتف صحيح';
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال بريد إلكتروني صحيح';
+                                }
+                                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                                  return 'الرجاء إدخال بريد إلكتروني صحيح';
                                 }
                                 return null;
                               },
+
                             ),
                             const SizedBox(height: 16),
                             CustomTextField(
@@ -246,8 +250,10 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                               isDarkMode: isDarkMode,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
-                                if (value?.isEmpty ?? true ||
-                                    !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value!)) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال بريد إلكتروني صحيح';
+                                }
+                                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
                                   return 'الرجاء إدخال بريد إلكتروني صحيح';
                                 }
                                 return null;
@@ -261,11 +267,15 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                               isDarkMode: isDarkMode,
                               isPassword: true,
                               validator: (value) {
-                                if (value?.isEmpty ?? true || value!.length < 6) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال كلمة المرور';
+                                }
+                                if (value.length < 6) {
                                   return 'كلمة المرور يجب أن تكون على الأقل 6 أحرف';
                                 }
                                 return null;
                               },
+
                             ),
                             const SizedBox(height: 16),
                             CustomTextField(
