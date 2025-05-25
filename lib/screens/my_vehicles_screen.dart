@@ -31,7 +31,6 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
   void initState() {
     super.initState();
     userID = widget.userData?['user_id'] ?? 0;
-    print(userID);
     _fetchManufacturers();
     _fetchVehicles();
     _startTimer();
@@ -61,10 +60,8 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
           _manufacturers.addAll(List<Map<String, dynamic>>.from(response));
         });
       } else {
-        print('Error fetching manufacturers: ${response[0]}');
       }
     } catch (error) {
-      print('Error fetching manufacturers: $error');
     }
   }
 
@@ -76,20 +73,18 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
           .eq('user_id', userID)
           .order('created_at', ascending: false);
 
-      print(vehicleResponse);
       if (vehicleResponse.isNotEmpty) {
         setState(() {
           _vehicles.clear();
           _vehicles.addAll(List<Map<String, dynamic>>.from(vehicleResponse));
         });
       } else {
-        _showSnackbar(
-            'لا توجد مركبات لهذا المستخدم.', 'تنبيه', SnackBarType.alert);
+        // _showSnackbar(
+        //     'لا توجد مركبات لهذا المستخدم.', 'تنبيه', SnackBarType.alert);
       }
     } catch (error) {
-      print('Error fetching vehicles: $error');
-      // _showSnackbar(
-      //     'تنبيه', 'لا توجد مركبات لهذا المستخدم.', SnackBarType.alert);
+      _showSnackbar(
+          'تنبيه', 'لا توجد مركبات لهذا المستخدم.', SnackBarType.alert);
     }
   }
 
@@ -141,7 +136,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha:0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -189,11 +184,11 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00A8A8).withOpacity(0.8),
+                        color: const Color(0xFF00A8A8).withValues(alpha:0.8),
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha:0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -378,7 +373,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha:0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -430,7 +425,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -829,7 +824,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.red.withOpacity(0.1), // خلفية دائرية حمراء
+                  color: Colors.red.withValues(alpha:0.1), // خلفية دائرية حمراء
                 ),
                 padding: const EdgeInsets.all(10),
                 child: const Icon(
@@ -991,7 +986,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha:0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1082,7 +1077,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
   //               Container(
   //                 padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
   //                 decoration: BoxDecoration(
-  //                   color: statusColor.withOpacity(0.1),
+  //                   color: statusColor.withValues(alpha:0.1),
   //                   borderRadius: BorderRadius.circular(20),
   //                 ),
   //                 child: Row(
@@ -1263,7 +1258,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1399,7 +1394,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
   //         Container(
   //           padding: EdgeInsets.all(8),
   //           decoration: BoxDecoration(
-  //             color: Color(0xFF3CD3AD).withOpacity(0.1),
+  //             color: Color(0xFF3CD3AD).withValues(alpha:0.1),
   //             borderRadius: BorderRadius.circular(10),
   //           ),
   //           child: Icon(icon, color: Color(0xFF3CD3AD), size: 22),
@@ -1442,7 +1437,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
           Container(
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Color(0xFF3CD3AD).withOpacity(0.1),
+              color: Color(0xFF3CD3AD).withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: Color(0xFF3CD3AD), size: 22),
@@ -1486,7 +1481,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           color: _selectedBrand == brand
-              ? const Color(0xFF00A8A8).withOpacity(0.1)
+              ? const Color(0xFF00A8A8).withValues(alpha:0.1)
               : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
         ),

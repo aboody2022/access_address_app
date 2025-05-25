@@ -13,8 +13,8 @@ Widget buildBottomNavBar(BuildContext context, int selectedIndex, Function(int) 
       boxShadow: [
         BoxShadow(
           color: isDarkMode
-              ? Colors.black.withOpacity(0.3) // لون الظل في الوضع الليلي
-              : Colors.black.withOpacity(0.1), // لون الظل في الوضع الفاتح
+              ? Colors.black.withValues(alpha:0.3) // لون الظل في الوضع الليلي
+              : Colors.black.withValues(alpha:0.1), // لون الظل في الوضع الفاتح
           blurRadius: 8,
           offset: const Offset(0, -2),
         ),
@@ -40,7 +40,7 @@ Widget buildBottomNavBar(BuildContext context, int selectedIndex, Function(int) 
             ? Colors.white // لون الأيقونة النشطة في الوضع الليلي
             : const Color(0xFF4CB8C4), // لون الأيقونة النشطة في الوضع الفاتح
         inactiveIconColor: isDarkMode
-            ? Colors.white.withOpacity(0.6) // لون الأيقونة غير النشطة في الوضع الليلي
+            ? Colors.white.withValues(alpha:0.6) // لون الأيقونة غير النشطة في الوضع الليلي
             : Colors.white, // لون الأيقونة غير النشطة في الوضع الفاتح
         selectedIndex: selectedIndex, // الشاشة المحددة حاليًا
         onTabChange: changeTab, // استدعاء الدالة عند تغيير الشاشة
@@ -56,8 +56,8 @@ Widget buildBottomNavBar(BuildContext context, int selectedIndex, Function(int) 
             backgroundGradient: LinearGradient(
               colors: isDarkMode
                   ? [
-                Colors.white.withOpacity(0.1), // لون خلفية الزر في الوضع الليلي
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha:0.1), // لون خلفية الزر في الوضع الليلي
+                Colors.white.withValues(alpha:0.05),
               ]
                   : [
                 Colors.white, // لون خلفية الزر في الوضع الفاتح
@@ -71,8 +71,8 @@ Widget buildBottomNavBar(BuildContext context, int selectedIndex, Function(int) 
             backgroundGradient: LinearGradient(
               colors: isDarkMode
                   ? [
-                Colors.white.withOpacity(0.1), // لون خلفية الزر في الوضع الليلي
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha:0.1), // لون خلفية الزر في الوضع الليلي
+                Colors.white.withValues(alpha:0.05),
               ]
                   : [
                 Colors.white, // لون خلفية الزر في الوضع الفاتح
@@ -86,8 +86,8 @@ Widget buildBottomNavBar(BuildContext context, int selectedIndex, Function(int) 
             backgroundGradient: LinearGradient(
               colors: isDarkMode
                   ? [
-                Colors.white.withOpacity(0.1), // لون خلفية الزر في الوضع الليلي
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha:0.1), // لون خلفية الزر في الوضع الليلي
+                Colors.white.withValues(alpha:0.05),
               ]
                   : [
                 Colors.white, // لون خلفية الزر في الوضع الفاتح
@@ -101,8 +101,8 @@ Widget buildBottomNavBar(BuildContext context, int selectedIndex, Function(int) 
             backgroundGradient: LinearGradient(
               colors: isDarkMode
                   ? [
-                Colors.white.withOpacity(0.1), // لون خلفية الزر في الوضع الليلي
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha:0.1), // لون خلفية الزر في الوضع الليلي
+                Colors.white.withValues(alpha:0.05),
               ]
                   : [
                 Colors.white, // لون خلفية الزر في الوضع الفاتح

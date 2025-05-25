@@ -114,8 +114,8 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
         backgroundColor: isError
-            ? Colors.red.withOpacity(0.9)
-            : Colors.green.withOpacity(0.9),
+            ? Colors.red.withValues(alpha:0.9)
+            : Colors.green.withValues(alpha:0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -175,7 +175,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             fontSize: 14,
                             color: isDarkMode
                                 ? Colors.white70
-                                : Colors.white.withOpacity(0.9),
+                                : Colors.white.withValues(alpha:0.9),
                           ),
                         ),
                       ],
@@ -223,7 +223,7 @@ class _AccountScreenState extends State<AccountScreen> {
               if (_isLoading)
                 Container(
                   color: isDarkMode
-                      ? Colors.black.withOpacity(0.7)
+                      ? Colors.black.withValues(alpha:0.7)
                       : Colors.black26,
                   child: Center(
                     child: CircularProgressIndicator(
@@ -279,8 +279,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.2),
+                ? Colors.black.withValues(alpha:0.3)
+                : Colors.black.withValues(alpha:0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -312,8 +312,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -387,8 +387,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -428,8 +428,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

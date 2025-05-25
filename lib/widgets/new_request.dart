@@ -107,7 +107,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
         });
       }
     } catch (e) {
-      print('خطأ في جلب موديلات المركبات: $e');
       if (mounted) {
         _showSnackbar(
           'خطأ',
@@ -170,7 +169,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
         }
       }
     } catch (e) {
-      print('خطأ في إضافة/تحديث المركبة: $e');
       if (mounted) {
         _showSnackbar(
           'خطأ',
@@ -259,7 +257,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
             'تم التحديث', 'تم تحديث قائمة المركبات', SnackBarType.success);
       }
     } catch (e) {
-      print('خطأ في تحديث موديلات المركبات: $e');
       if (mounted) {
         _showSnackbar(
           'خطأ',
@@ -528,7 +525,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
         }
       }
     } catch (e) {
-      print('خطأ في إرسال الطلب أو إنشاء الإشعارات: $e');
       _showErrorSnackBar();
     } finally {
       if (mounted) {
@@ -536,49 +532,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
       }
     }
   }
-
-
-  // Future<void> _submitForm() async {
-  //   if (!_formKey.currentState!.validate()) {
-  //     _showErrorSnackBar();
-  //     return;
-  //   }
-  //
-  //   setState(() => _isLoading = true);
-  //   try {
-  //     final response =
-  //         await Supabase.instance.client.from('maintenance_requests').insert({
-  //       'request_type': requestType,
-  //       'user_id': userID,
-  //       'service_provider': serviceProvider,
-  //       'vehicle_id': selectedVehicleModelId,
-  //       'problem_description': notesController.text,
-  //       'location_address': locationController.text,
-  //     }).select();
-  //
-  //     if (response.isNotEmpty) {
-  //       _showSnackbar('نجاح', 'تم تقديم الطلب بنجاح!', SnackBarType.success);
-  //       await _sendToWhatsApp();
-  //       if (mounted) {
-  //         Navigator.pop(context, {
-  //           'requestType': requestType,
-  //           'serviceProvider': serviceProvider,
-  //           'vehicleId': selectedVehicleModelId,
-  //           'notes': notesController.text,
-  //           'location': locationController.text,
-  //           'full_name': fname
-  //         });
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print('خطأ في إرسال الطلب: $e');
-  //     _showErrorSnackBar();
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() => _isLoading = false);
-  //     }
-  //   }
-  // }
 
   Future<void> _sendToWhatsApp() async {
     try {
@@ -608,7 +561,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
         _showSnackbar('خطأ', 'لم يتمكن من فتح WhatsApp.', SnackBarType.fail);
       }
     } catch (e) {
-      print('خطأ في إرسال رسالة WhatsApp: $e');
       _showSnackbar('خطأ', 'حدث خطأ أثناء فتح WhatsApp.', SnackBarType.fail);
     }
   }

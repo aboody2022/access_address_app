@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       // الشعار يبقى كما هو
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha:0.05),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         padding: const EdgeInsets.all(10),
@@ -368,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'المزيد',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.black38,
+              color: Colors.white54,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -379,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAnimatedRequestList(Size size, HomeModel homeModel) {
     if (homeModel.orders.isEmpty) {
-      return _buildNoDataMessage('لا توجد طلبات', size);
+      return _buildNoDataMessage('لا توجد طلبات', size,'طلب');
     }
 
     return LiveList(
@@ -510,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAnimatedVehicleList(Size size, HomeModel homeModel) {
     if (homeModel.vehicles.isEmpty) {
-      return _buildNoDataMessage('لا توجد مركبات', size);
+      return _buildNoDataMessage('لا توجد مركبات', size,'مركبة');
     }
 
     return LiveList(
@@ -592,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNoDataMessage(String message, Size size) {
+  Widget _buildNoDataMessage(String message, Size size,String word) {
     final theme = Theme.of(context);
     return Column(
       children: [
@@ -605,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             // التنقل إلى شاشة إضافة طلب أو مركبة
           },
-          child: Text('إضافة طلب / مركبة'),
+          child: Text('قم بإضافة ${word} '),
         ),
       ],
     );

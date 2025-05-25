@@ -11,6 +11,7 @@ import '../core/services/biometric_service.dart';
 import '../widgets/check_internet_status.dart';
 import 'baes_screen.dart';
 import '../injection.dart';
+import 'forgot_password_screen.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -79,79 +80,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  // معالجة تسجيل الدخول
-  // Future<void> handleLogin() async {
-  //   if (!_formKey.currentState!.validate()) return;
-  //
-  //   // if (! await _checkInternetConnection()) {
-  //   //   _showSnackbar('تنبيه!', 'لا يوجد اتصال بالإنترنت. الرجاء التحقق من الشبكة.', SnackBarType.alert);
-  //   //   return;
-  //   // }
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
-  //
-  //   try {
-  //     final response = await Supabase.instance.client
-  //         .from('users')
-  //         .select()
-  //         .eq('username', _usernameController.text)
-  //         .single();
-  //
-  //     if (response.isEmpty) {
-  //       _showSnackbar('خطأ', 'اسم المستخدم غير موجود.', SnackBarType.fail);
-  //       return;
-  //     }
-  //
-  //     final storedHashedPassword = response['password'];
-  //     if (Crypt(storedHashedPassword).match(_passwordController.text)) {
-  //       final userData = {
-  //         'user_id': response['user_id'],
-  //         'username': response['username'],
-  //         'email': response['email'],
-  //         'full_name': response['full_name'],
-  //         'phone_number': response['phone_number'],
-  //         'password': response['password'],
-  //         'profileImagePath': response['profile_picture'],
-  //       };
-  //
-  //       Navigator.of(context).pushReplacement(
-  //         PageRouteBuilder(
-  //           maintainState: false,
-  //           pageBuilder: (context, animation, secondaryAnimation) =>
-  //               MainScreen(userData: userData),
-  //           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-  //             const begin = Offset(0.0, 5.0);
-  //             const end = Offset.zero;
-  //             const curve = Curves.easeInOut;
-  //             var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-  //             var offsetAnimation = animation.drive(tween);
-  //             return SlideTransition(
-  //               position: offsetAnimation,
-  //               child: child,
-  //             );
-  //           },
-  //         ),
-  //       );
-  //     } else {
-  //       _showSnackbar('خطأ', 'كلمة المرور غير صحيحة.', SnackBarType.fail);
-  //     }
-  //   } catch (e) {
-  //     if (e is PostgrestException && e.message.contains('The result contains 0 rows')) {
-  //       _showSnackbar('خطأ', 'البريد الإلكتروني غير موجود.', SnackBarType.fail);
-  //     } else {
-  //       print('Error: $e');
-  //       _showSnackbar('خطأ', 'حدث خطأ غير متوقع.', SnackBarType.fail);
-  //     }
-  //   } finally {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //   }
-  // }
-  // عرض رسائل التنبيه
-
-
   void _showSnackbar(String title, String message, SnackBarType type) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       IconSnackBar.show(
@@ -166,8 +94,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       );
     });
   }
-
-
 
   void _navigateToRegister() {
     Navigator.of(context).push(PageRouteBuilder(
@@ -220,7 +146,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                   child: Container(
-                    color: (isDarkMode ? Colors.black : Colors.white).withOpacity(0.1),
+                    color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha:0.1),
                   ),
                 ),
                 // المحتوى الرئيسي
@@ -305,14 +231,14 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: isDarkMode ? Colors.grey[800]!.withOpacity(0.8) : Colors.white,
+        fillColor: isDarkMode ? Colors.grey[800]!.withValues(alpha:0.8) : Colors.white,
         hintText: hintText,
         hintStyle: TextStyle(
-          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withOpacity(0.8),
+          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withValues(alpha:0.8),
         ),
         prefixIcon: HugeIcon(
           icon: icon,
-          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withOpacity(0.8) ?? Colors.grey,
+          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withValues(alpha:0.8) ?? Colors.grey,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
@@ -345,19 +271,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: isDarkMode ? Colors.grey[800]!.withOpacity(0.8) : Colors.white,
+        fillColor: isDarkMode ? Colors.grey[800]!.withValues(alpha:0.8) : Colors.white,
         hintText: 'أدخل كلمة المرور الخاصة بك',
         hintStyle: TextStyle(
-          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withOpacity(0.8),
+          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withValues(alpha:0.8),
         ),
         prefixIcon: HugeIcon(
           icon: HugeIcons.strokeRoundedLockPassword,
-          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withOpacity(0.8) ?? Colors.grey,
+          color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withValues(alpha:0.8) ?? Colors.grey,
         ),
         suffixIcon: IconButton(
           icon: Icon(
             _isPasswordHidden ? HugeIcons.strokeRoundedView : HugeIcons.strokeRoundedViewOff,
-            color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withOpacity(0.8) ?? Colors.grey,
+            color: (isDarkMode ? Colors.grey[400] : Colors.grey[600])?.withValues(alpha:0.8) ?? Colors.grey,
           ),
           onPressed: () {
             setState(() {
@@ -399,18 +325,31 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     return Align(
       alignment: Alignment.centerLeft,
       child: TextButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/forgot-password');
+        onPressed: () async {
+          // استدعاء شاشة استعادة كلمة المرور وانتظار النتيجة
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+          );
+
+          // التحقق من وجود اسم مستخدم مرجع
+          if (result != null && mounted) {
+            setState(() {
+              // استخدام اسم المستخدم المرجع في حقل اسم المستخدم
+              _usernameController.text = result;
+            });
+          }
         },
         child: Text(
           'هل نسيت كلمة المرور؟',
           style: TextStyle(
-            color:Colors.teal,
+            color: Colors.teal,
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildRegisterRow() {
     return Row(

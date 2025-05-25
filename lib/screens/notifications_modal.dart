@@ -182,8 +182,8 @@ class _NotificationsModalState extends State<NotificationsModal> {
                     decoration: BoxDecoration(
                       color: !notification['is_read']
                           ? (widget.isDarkMode
-                          ? Colors.blue.withOpacity(0.1)
-                          : Colors.blue.withOpacity(0.05))
+                          ? Colors.blue.withValues(alpha:0.1)
+                          : Colors.blue.withValues(alpha:0.05))
                           : null,
                       border: Border(
                         bottom: BorderSide(

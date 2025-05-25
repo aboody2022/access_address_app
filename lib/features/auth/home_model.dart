@@ -31,7 +31,6 @@ class HomeModel extends ChangeNotifier {
         _orders.clear(); // تأكد من مسح البيانات إذا لم يكن هناك بيانات جديدة
       }
     } catch (error) {
-      print('Error fetching orders: $error');
     } finally {
       _isOrdersLoading = false;
       notifyListeners();
@@ -56,7 +55,6 @@ class HomeModel extends ChangeNotifier {
         _vehicles.clear(); // تأكد من مسح البيانات إذا لم يكن هناك بيانات جديدة
       }
     } catch (error) {
-      print('Error fetching vehicles: $error');
     } finally {
       _isVehiclesLoading = false;
       notifyListeners();

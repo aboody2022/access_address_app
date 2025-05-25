@@ -1,3 +1,4 @@
+import 'package:access_address_app/screens/forgot_password_screen.dart';
 import 'package:access_address_app/screens/login_page.dart';
 import 'package:access_address_app/injection.dart';
 import 'package:access_address_app/screens/account_screen.dart';
@@ -47,11 +48,11 @@ Future<void> main() async {
       DeviceOrientation.portraitDown,
     ]);
 
-    // تهيئة Supabase
-    await Supabase.initialize(
-        url: 'https://szbudnhgiiyflnlumcuf.supabase.co',
-        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6YnVkbmhnaWl5ZmxubHVtY3VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0NjgwNjMsImV4cCI6MjA1MjA0NDA2M30.IF6MMJypaQW8bHqomtoTFDSuLTIDDbOB12MVvFDE1_4'
-    );
+    Supabase.initialize(
+        url: 'https://sipdyolcorgpqocgydik.supabase.co',
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpcGR5b2xjb3JncHFvY2d5ZGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3Nzk2OTEsImV4cCI6MjA2MTM1NTY5MX0.JwtkGwtp9qGGdNv7QscyIuxsKNVeSf46nqc5giZXNgg',
+      );
+
 
     runApp(ChangeNotifierProvider(
       create: (context) => HomeModel(),
@@ -62,7 +63,6 @@ Future<void> main() async {
       ),
     ));
   } catch (e) {
-    print('Initialization error: $e');
     // يمكن إضافة معالجة الأخطاء هنا
   }
 }
@@ -73,11 +73,11 @@ class MyApp extends StatelessWidget {
   final BiometricService biometricService;
 
   const MyApp({
-    Key? key,
+    super.key,
     this.savedThemeMode,
     required this.sharedPreferences,
     required this.biometricService,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +119,8 @@ class MyApp extends StatelessWidget {
             '/baes': (context) => MainScreen(),
             '/splash_screen': (context) => SplashScreen(),
             '/OnboardScreen': (context) => OnboardScreen(),
+            '/forgot-password': (context) => ForgotPasswordScreen(),
+
           },
           builder: (context, child) {
             return Directionality(

@@ -225,6 +225,24 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                               },
                             ),
                             const SizedBox(height: 16),
+                            // CustomTextField(
+                            //   controller: _phoneController,
+                            //   hintText: 'ادخل رقم هاتفك',
+                            //   icon: HugeIcons.strokeRoundedSmartPhone01,
+                            //   isDarkMode: isDarkMode,
+                            //   keyboardType: TextInputType.phone,
+                            //   validator: (value) {
+                            //     if (value == null || value.isEmpty) {
+                            //       return 'الرجاء إدخال بريد إلكتروني صحيح';
+                            //     }
+                            //     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                            //       return 'الرجاء إدخال بريد إلكتروني صحيح';
+                            //     }
+                            //     return null;
+                            //   },
+                            //
+                            // ),
+
                             CustomTextField(
                               controller: _phoneController,
                               hintText: 'ادخل رقم هاتفك',
@@ -233,15 +251,17 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                               keyboardType: TextInputType.phone,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'الرجاء إدخال بريد إلكتروني صحيح';
+                                  return 'الرجاء إدخال رقم هاتف';
                                 }
-                                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
-                                  return 'الرجاء إدخال بريد إلكتروني صحيح';
+                                // التحقق من أن الرقم يبدأ بـ 05 متبوعًا بـ 8 أرقام
+                                if (!RegExp(r'^05\d{8}$').hasMatch(value)) {
+                                  return 'الرجاء إدخال رقم هاتف سعودي صحيح (مثال: 0512345678)';
                                 }
                                 return null;
                               },
-
                             ),
+
+
                             const SizedBox(height: 16),
                             CustomTextField(
                               controller: _emailController,

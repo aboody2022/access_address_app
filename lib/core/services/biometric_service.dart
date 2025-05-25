@@ -14,27 +14,23 @@ class BiometricService {
       // التحقق من دعم الجهاز للمصادقة البيومترية
       final isDeviceSupported = await _localAuth.isDeviceSupported();
       if (!isDeviceSupported) {
-        print('Device does not support biometric authentication');
         return false;
       }
 
       // التحقق من توفر المصادقة البيومترية
       final canCheckBiometrics = await _localAuth.canCheckBiometrics;
       if (!canCheckBiometrics) {
-        print('No biometrics available on this device');
         return false;
       }
 
       // التحقق من الأنواع المتاحة
       final availableBiometrics = await _localAuth.getAvailableBiometrics();
       if (availableBiometrics.isEmpty) {
-        print('No biometrics enrolled on this device');
         return false;
       }
 
       return true;
     } catch (e) {
-      print('Error checking biometrics: $e');
       return false;
     }
   }
@@ -54,7 +50,6 @@ class BiometricService {
         ),
       );
     } catch (e) {
-      print('Authentication error: $e');
       return false;
     }
   }
@@ -68,7 +63,6 @@ class BiometricService {
       };
       await _prefs.setString(_credentialsKey, jsonEncode(credentials));
     } catch (e) {
-      print('Error saving credentials: $e');
       throw Exception('Failed to save credentials');
     }
   }
@@ -85,7 +79,6 @@ class BiometricService {
       }
       return null;
     } catch (e) {
-      print('Error retrieving credentials: $e');
       return null;
     }
   }
@@ -94,7 +87,6 @@ class BiometricService {
     try {
       await _prefs.remove(_credentialsKey);
     } catch (e) {
-      print('Error removing credentials: $e');
       throw Exception('Failed to remove credentials');
     }
   }

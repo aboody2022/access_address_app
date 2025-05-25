@@ -58,7 +58,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       });
     } else {
       // التعامل مع الخطأ
-      print('Error fetching orders: ${response}');
     }
   }
 
@@ -257,8 +256,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Image.asset('assets/images/no_results.png',
-                                height: 100,color: isDarkMode ? Colors.grey[700] : null), // صورة عند عدم العثور على نتائج
+                            Image.asset('assets/images/no_results_white.png',
+                                height: 150), // صورة عند عدم العثور على نتائج
                             const SizedBox(height: 16),
                             Text(
                               'لا توجد اي طلبات',
@@ -293,7 +292,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
           _showSnackbar('فشل', 'فشل في حذف الطلب', SnackBarType.fail);
         }
       } catch (e) {
-        print('Error deleting order: $e');
         _showSnackbar('خطأ', 'حدث خطأ أثناء حذف الطلب', SnackBarType.fail);
       }
     }

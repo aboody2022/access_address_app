@@ -103,7 +103,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     try {
       final response = await Supabase.instance.client
           .from('manufacturers')
-          .select('manufacturer_id, name')
+          .select('manufacturer_uuid, name')
           .order('name');
 
       if (!mounted) return;
@@ -218,7 +218,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
                       onTap: () {
                         setState(() {
                           _manufacturerId =
-                          _manufacturers[index]['manufacturer_id'];
+                          _manufacturers[index]['manufacturer_uuid'];
                           _manufacturerController.text =
                           _manufacturers[index]['name'];
                         });
