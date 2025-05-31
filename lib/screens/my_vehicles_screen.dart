@@ -311,7 +311,7 @@ class _MyVehiclesScreenState extends State<MyVehiclesScreen> {
               context,
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
-                    AddVehicleScreen(
+                AddVehicleScreen (
                         userData: widget.userData,
                         isDarkMode: AdaptiveTheme.of(context).brightness ==
                             Brightness.dark),
