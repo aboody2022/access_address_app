@@ -511,6 +511,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'edit_profile_screen.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -541,6 +542,7 @@ class _AccountScreenState extends State<AccountScreen> {
     _initializeUserData();
     _loadThemeMode();
   }
+
 
   Future<void> _loadThemeMode() async {
     final savedThemeMode = await AdaptiveTheme.getThemeMode();
@@ -574,7 +576,6 @@ class _AccountScreenState extends State<AccountScreen> {
 
       _refreshUserData();
     } catch (e) {
-      print('Error initializing user data: $e');
       _showMessage('حدث خطأ أثناء تحميل البيانات', true);
     }
   }
@@ -599,7 +600,6 @@ class _AccountScreenState extends State<AccountScreen> {
         });
       }
     } catch (e) {
-      print('Error refreshing user data: $e');
       _showMessage('حدث خطأ أثناء تحديث البيانات', true);
     } finally {
       setState(() => _isLoading = false);
@@ -620,8 +620,8 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
         backgroundColor: isError
-            ? Colors.red.withOpacity(0.9)
-            : Colors.green.withOpacity(0.9),
+            ? Colors.red.withValues(alpha:0.9)
+            : Colors.green.withValues(alpha:0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -681,7 +681,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             fontSize: 14,
                             color: isDarkMode
                                 ? Colors.white70
-                                : Colors.white.withOpacity(0.9),
+                                : Colors.white.withValues(alpha:0.9),
                           ),
                         ),
                       ],
@@ -715,7 +715,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Text(
-                      'Version 8.2.12',
+                      'الإصدار 1.0.2',
                       style: TextStyle(
                         fontSize: 14,
                         color: isDarkMode
@@ -729,7 +729,7 @@ class _AccountScreenState extends State<AccountScreen> {
               if (_isLoading)
                 Container(
                   color: isDarkMode
-                      ? Colors.black.withOpacity(0.7)
+                      ? Colors.black.withValues(alpha:0.7)
                       : Colors.black26,
                   child: Center(
                     child: CircularProgressIndicator(
@@ -785,8 +785,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.2),
+                ? Colors.black.withValues(alpha:0.3)
+                : Colors.black.withValues(alpha:0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -818,8 +818,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -873,8 +873,14 @@ class _AccountScreenState extends State<AccountScreen> {
     }),
     _buildThemeSwitchTile(),
     _buildNavigationTile('اللغة', 'العربية', Icons.language, () {}),
-    _buildNavigationTile('مساعدة', '', Icons.help_outline, () {}),
     _buildNavigationTile(
+      'مساعدة',
+      '',
+      Icons.help_outline,
+          () {
+        _showHelpDialog(context, AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark);
+      },
+    ),    _buildNavigationTile(
       'حذف الحساب',
       '',
       Icons.delete_forever,
@@ -900,8 +906,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -941,8 +947,8 @@ class _AccountScreenState extends State<AccountScreen> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha:0.2)
+                : Colors.grey.withValues(alpha:0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1029,7 +1035,6 @@ class _AccountScreenState extends State<AccountScreen> {
           MaterialPageRoute(builder: (context) => LoginPage()),
         );
       } catch (e) {
-        print('Error deleting account: $e');
         _showMessage('فشل حذف الحساب، يرجى المحاولة مرة أخرى.', true);
       } finally {
         setState(() => _isLoading = false);
@@ -1064,4 +1069,125 @@ class _AccountScreenState extends State<AccountScreen> {
     });
   }
 
+
+  void _showHelpDialog(BuildContext context, bool isDarkMode) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'مساعدة',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.support_agent,
+                    size: 48,
+                    color: isDarkMode ? Colors.tealAccent : Color(0xFF1E1E1E),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'مساعدة تطبيق عنوان الوصول',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'يقدم التطبيق خدمات صيانة السيارات بجودة عالية وسرعة في التنفيذ.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () async {
+                      final Uri telUri = Uri(scheme: 'tel', path: '+966507274427');
+                      if (await canLaunchUrl(telUri)) {
+                        await launchUrl(telUri);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('لا يمكن فتح تطبيق الاتصال')),
+                        );
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.phone,
+                            color: isDarkMode ? Colors.tealAccent : Color(0xFF3CD3AD)),
+                        const SizedBox(width: 8),
+                        Text(
+                          '+966 50 727 4427',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.tealAccent : Color(0xFF1E1E1E),
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode ? Colors.tealAccent : Color(0xFF1E1E1E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'إغلاق',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.black : Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
 }

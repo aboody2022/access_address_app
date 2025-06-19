@@ -1,20 +1,45 @@
+import 'package:access_address_app/core/themes/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
+import 'dart:developer' as developer; // Import for developer.log
+
+// Helper function to convert Arabic numerals to English numerals
+String convertArabicToEnglishNumbers(String input) {
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  const english = '0123456789';
+  return input.replaceAllMapped(RegExp('[٠-٩]'), (match) {
+    return english[arabic.indexOf(match.group(0)!)];
+  });
+}
+
+// Helper function to convert English numerals to Arabic numerals
+String convertEnglishToArabicNumbers(String input) {
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  const english = '0123456789';
+  return input.replaceAllMapped(RegExp('[0-9]'), (match) {
+    return arabic[english.indexOf(match.group(0)!)];
+  });
+}
+
+// Helper function to check if a character is an Arabic letter
+bool isArabicLetter(String char) {
+  final arabicLettersPattern = RegExp(r'^[أبجدهوزحطيكلمنسعفصقرتثخذضظغشءؤئلا]$');
+  return arabicLettersPattern.hasMatch(char);
+}
 
 class AddVehicleScreen extends StatefulWidget {
-  final Map<String, dynamic>? userData;
   final bool isDarkMode;
+  final Map<String, dynamic>? userData;
 
   const AddVehicleScreen({
-    super.key,
-    this.userData,
+    Key? key,
     required this.isDarkMode,
-  });
+    this.userData,
+  }) : super(key: key);
 
   @override
-  _AddVehicleScreenState createState() => _AddVehicleScreenState();
+  State<AddVehicleScreen> createState() => _AddVehicleScreenState();
 }
 
 class _AddVehicleScreenState extends State<AddVehicleScreen>
@@ -36,7 +61,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
   String? _manufacturerId;
   String? _modelId;
   String? _year;
-  String? _plateNumber;
+  String? _plateNumber; // This will be constructed from separate fields
   late int userID;
   List<Map<String, dynamic>> _manufacturers = [];
   List<Map<String, dynamic>> _models = [];
@@ -66,8 +91,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
   Color get shadowColor =>
       widget.isDarkMode ? Colors.black54 : Colors.grey[300]!;
 
-  final arabicLettersPattern = RegExp(r'^[أبحدرسصطعقكلمنهوي]$');
-  final numbersPattern = RegExp(r'^[0-9]+$');
+  // Updated regex to support both Arabic and English numbers for the numbers part of the plate
+  final numbersPattern = RegExp(r'^[0-9٠-٩]+$');
 
   @override
   void initState() {
@@ -101,7 +126,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     });
 
     try {
-      final response = await Supabase.instance.client
+      final List<Map<String, dynamic>> response = await Supabase.instance.client
           .from('manufacturers')
           .select('manufacturer_uuid, name')
           .order('name');
@@ -110,16 +135,22 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
 
       setState(() {
         _isLoadingManufacturers = false;
-        if (response.isNotEmpty) {
-          _manufacturers = List<Map<String, dynamic>>.from(response);
-        }
+        _manufacturers = response;
       });
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingManufacturers = false;
+      });
+      developer.log('Error fetching manufacturers: ${e.message}', name: 'AddVehicleScreen');
+      _showErrorSnackBar('حدث خطأ في جلب بيانات الشركات المصنعة.');
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _isLoadingManufacturers = false;
       });
-      _showErrorSnackBar('حدث خطأ في جلب بيانات الشركات المصنعة');
+      developer.log('Unexpected error fetching manufacturers: ${error.toString()}', name: 'AddVehicleScreen');
+      _showErrorSnackBar('حدث خطأ غير متوقع في جلب بيانات الشركات المصنعة.');
     }
   }
 
@@ -132,7 +163,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     });
 
     try {
-      final response = await Supabase.instance.client
+      final List<Map<String, dynamic>> response = await Supabase.instance.client
           .from('models')
           .select('model_id, name')
           .eq('manufacturer_id', manufacturerId)
@@ -142,16 +173,22 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
 
       setState(() {
         _isLoadingModels = false;
-        if (response.isNotEmpty) {
-          _models = List<Map<String, dynamic>>.from(response);
-        }
+        _models = response;
       });
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingModels = false;
+      });
+      developer.log('Error fetching models: ${e.message}', name: 'AddVehicleScreen');
+      _showErrorSnackBar('حدث خطأ في جلب بيانات الموديلات.');
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _isLoadingModels = false;
       });
-      _showErrorSnackBar('حدث خطأ في جلب بيانات الموديلات');
+      developer.log('Unexpected error fetching models: ${error.toString()}', name: 'AddVehicleScreen');
+      _showErrorSnackBar('حدث خطأ غير متوقع في جلب بيانات الموديلات.');
     }
   }
 
@@ -191,10 +228,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
               ),
               Container(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery
-                      .of(context)
-                      .size
-                      .height * 0.5,
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
                 ),
                 child: _isLoadingManufacturers
                     ? Center(
@@ -277,10 +311,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
               ),
               Container(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery
-                      .of(context)
-                      .size
-                      .height * 0.5,
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
                 ),
                 child: _isLoadingModels
                     ? Center(
@@ -319,608 +350,551 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     );
   }
 
-  Widget _buildLetterField(TextEditingController controller) {
-    return Container(
-      decoration: BoxDecoration(
-        color: widget.isDarkMode ? Colors.grey[850] : Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: borderColor,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withValues(alpha:0.05),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      margin: EdgeInsets.symmetric(horizontal: 2),
-      child: TextFormField(
-        controller: controller,
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.rtl,
-        style: TextStyle(
-          color: textColor,
-          fontFamily: 'Cairo',
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: 'ح',
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 5,
-            vertical: 12,
-          ),
-          errorStyle: TextStyle(
-            height: 0,
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'مطلوب';
-          }
-          if (!isArabicLetter(value)) {
-            return 'غير صالح';
-          }
-          return null;
-        },
-        maxLength: 1,
-        buildCounter: (context,
-            {required currentLength, required isFocused, maxLength}) => null,
-        onChanged: (value) {
-          if (value.length == 1) {
-            // الانتقال التلقائي إلى الحقل التالي
-            FocusScope.of(context).nextFocus();
-          }
-        },
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
       ),
     );
   }
 
-  Widget _buildSaudiLicensePlate() {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'لوحة السيارة',
-            style: TextStyle(
-              color: textColor,
-              fontFamily: 'Cairo',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: fieldColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor),
-              boxShadow: [
-                BoxShadow(
-                  color: shadowColor.withValues(alpha:0.1),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  // إضافة الشعار
-                  Expanded(
-                    child: SizedBox(
-                      width: 40, // عرض الشعار
-                      height: 65, // ارتفاع الشعار
-                      child: Image.asset(
-                        !widget.isDarkMode?
-                        'assets/images/plate_logo.png':'assets/images/plate_white_logo.png',
-                        // تأكد من وضع الشعار في المسار الصحيح
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          left: BorderSide(color: borderColor, width: 2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 2),
-                              child: _buildLetterField(_firstLetterController),
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 2),
-                              child: _buildLetterField(_secondLetterController),
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 2),
-                              child: _buildLetterField(_thirdLetterController),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      controller: _plateNumbersController,
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(
-                        color: textColor,
-                        fontFamily: 'Cairo',
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'الأرقام',
-                        hintStyle: TextStyle(
-                          color: hintColor,
-                          fontFamily: 'Cairo',
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'أدخل الأرقام';
-                        }
-                        if (value.length != 4) {
-                          return 'يجب إدخال 4 أرقام';
-                        }
-                        if (!numbersPattern.hasMatch(value)) {
-                          return 'أرقام غير صالحة';
-                        }
-                        return null;
-                      },
-                      maxLength: 4,
-                      buildCounter: (context,
-                          {required currentLength, required isFocused, maxLength}) => null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: hintColor),
-                SizedBox(width: 8),
-                Text(
-                  'مثال: ح ر ب 1234',
-                  style: TextStyle(
-                    color: hintColor,
-                    fontFamily: 'Cairo',
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
       ),
     );
-  }
-
-  Widget _buildTextField({
-    required String hintText,
-    required IconData icon,
-    required TextEditingController controller,
-    required FormFieldSetter<String> onSaved,
-    required FormFieldValidator<String> validator,
-    required TextInputType keyboardType,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: TextStyle(
-          color: textColor,
-          fontFamily: 'Cairo',
-        ),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
-            color: hintColor,
-            fontFamily: 'Cairo',
-          ),
-          filled: true,
-          fillColor: fieldColor,
-          prefixIcon: Icon(icon, color: hintColor),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: borderColor),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Color(0xFF3CD3AD), width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red),
-          ),
-        ),
-        onSaved: onSaved,
-        validator: validator,
-      ),
-    );
-  }
-
-  Widget _buildManufacturerField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: TextFormField(
-        readOnly: true,
-        controller: _manufacturerController,
-        style: TextStyle(
-          color: textColor,
-          fontFamily: 'Cairo',
-        ),
-        decoration: InputDecoration(
-          hintText: 'اختر الشركة المصنعة',
-          hintStyle: TextStyle(
-            color: hintColor,
-            fontFamily: 'Cairo',
-          ),
-          filled: true,
-          fillColor: fieldColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: borderColor),
-          ),
-        ),
-        onTap: _showManufacturerPopup,
-        validator: (value) =>
-        value == null || value.isEmpty ? 'يرجى اختيار الشركة المصنعة' : null,
-      ),
-    );
-  }
-
-  Widget _buildModelField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: TextFormField(
-        readOnly: true,
-        controller: _modelController,
-        style: TextStyle(
-          color: textColor,
-          fontFamily: 'Cairo',
-        ),
-        decoration: InputDecoration(
-          hintText: 'اختر موديل السيارة',
-          hintStyle: TextStyle(
-            color: hintColor,
-            fontFamily: 'Cairo',
-          ),
-          filled: true,
-          fillColor: fieldColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: borderColor),
-          ),
-        ),
-        onTap: () {
-          if (_manufacturerId != null) {
-            _showModelPopup();
-          } else {
-            _showErrorSnackBar('يرجى اختيار الشركة المصنعة أولاً');
-          }
-        },
-        validator: (value) =>
-        value == null || value.isEmpty ? 'يرجى اختيار موديل السيارة' : null,
-      ),
-    );
-  }
-
-  Widget _buildYearField() {
-    return _buildTextField(
-      hintText: 'سنة الصنع',
-      keyboardType: TextInputType.number,
-      icon: Icons.calendar_today,
-      controller: _yearController,
-      onSaved: (value) => _year = value,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'يرجى إدخال سنة الصنع';
-        }
-        if (!RegExp(r'^\d{4}$').hasMatch(value) ||
-            int.parse(value) > DateTime
-                .now()
-                .year) {
-          return 'السنة غير صحيحة، يرجى التحقق منها';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildSubmitButton(double screenHeight, double screenWidth) {
-    return GestureDetector(
-      onTapDown: _isLoading ? null : (_) => _buttonController.forward(),
-      onTapUp: _isLoading
-          ? null
-          : (_) {
-        _buttonController.reverse();
-        _submitForm();
-      },
-      child: ScaleTransition(
-        scale: _buttonScale,
-        child: Container(
-          height: screenHeight * 0.06,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: _isLoading
-                  ? [Colors.grey, Colors.grey.shade400]
-                  : [Color(0xFF4CB8C4), Color(0xFF3CD3AD)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 5,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Center(
-            child: _isLoading
-                ? SizedBox(
-              height: screenHeight * 0.03,
-              width: screenHeight * 0.03,
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                strokeWidth: 2.0,
-              ),
-            )
-                : Text(
-              'إضافة',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: screenWidth * 0.045,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Cairo',
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _submitForm() {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
-
-      if (_manufacturerId == null || _modelId == null) {
-        _showErrorSnackBar('يرجى اختيار الشركة المصنعة والموديل');
-        return;
-      }
-
-      final plateLetters = '${_firstLetterController
-          .text}${_secondLetterController.text}${_thirdLetterController.text}';
-      final plateNumbers = _plateNumbersController.text.trim();
-
-      if (plateLetters.length != 3 || plateNumbers.isEmpty) {
-        _showErrorSnackBar('يرجى إدخال رقم اللوحة بشكل صحيح');
-        return;
-      }
-
-      final year = _yearController.text.trim();
-      if (year.isEmpty || !RegExp(r'^\d{4}$').hasMatch(year)) {
-        _showErrorSnackBar('يرجى إدخال سنة صنع صحيحة');
-        return;
-      }
-
-      _year = year;
-      _plateNumber = '$plateLetters $plateNumbers';
-
-      _addVehicle();
-    } else {
-      _showErrorSnackBar('يرجى التأكد من صحة جميع البيانات المدخلة');
-    }
   }
 
   Future<void> _addVehicle() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await Supabase.instance.client.from('vehicles').insert({
-        'manufacturer_id': _manufacturerId,
-        'model_id': _modelId,
-        'plate_number': _plateNumber,
-        'year': _year,
-        'user_id': userID,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      if (!mounted) return;
-
+    if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = false;
+        _isLoading = true;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'تمت إضافة المركبة بنجاح!',
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'Cairo',
-            ),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-      Navigator.pop(context);
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar('حدث خطأ أثناء إضافة المركبة');
+      try {
+        final String yearEnglish = convertArabicToEnglishNumbers(_yearController.text);
+        final String combinedPlateNumber =
+            _firstLetterController.text +
+                _secondLetterController.text +
+                _thirdLetterController.text +
+                convertArabicToEnglishNumbers(_plateNumbersController.text);
+
+        // Await the insert operation. On success, this returns List<Map<String, dynamic>>.
+        // On error, it throws a PostgrestException.
+        final List<Map<String, dynamic>> data = await Supabase.instance.client.from('vehicles').insert({
+          'user_id': userID,
+          'manufacturer_id': _manufacturerId,
+          'model_id': _modelId,
+          'plate_number': combinedPlateNumber,
+          'year': int.parse(yearEnglish),
+        }).select(); // .select() is crucial for getting data back or throwing an error
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        // If we reach here, it means the insert was successful and .select() returned data
+        if (data.isNotEmpty) {
+          developer.log('Supabase Insert Success: Data received: $data', name: 'AddVehicleScreen');
+          _showSuccessSnackBar('تمت إضافة المركبة بنجاح!');
+          Navigator.pop(context); // Navigate back on success
+        } else {
+          // This case might happen if .select() returns an empty list on success for some reason
+          developer.log('Supabase Insert Success: Empty data received, but no error. Assuming success.', name: 'AddVehicleScreen');
+          _showSuccessSnackBar('تمت إضافة المركبة بنجاح!');
+          Navigator.pop(context); // Navigate back on success
+        }
+
+      } on PostgrestException catch (e) {
+        // This block catches all Postgrest-specific exceptions thrown by the client
+        // (e.g., network issues, invalid API key, unique constraint violation, etc.)
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+        developer.log(
+          'Supabase PostgrestException (caught): ${e.message} ' +
+              '(Code: ${e.code}, Details: ${e.details}, Hint: ${e.hint})',
+          name: 'AddVehicleScreen',
+        );
+        if (e.code == '23505') { // Unique constraint violation
+          _showErrorSnackBar('رقم اللوحة موجود بالفعل.');
+        } else {
+          _showErrorSnackBar('فشل إضافة المركبة.');
+        }
+      } catch (error) {
+        // This catches any other unexpected errors (e.g., general Dart errors, parsing errors)
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+        developer.log('Unexpected Error during vehicle addition (general catch): ${error.toString()}', name: 'AddVehicleScreen');
+        _showErrorSnackBar('حدث خطأ غير متوقع أثناء إضافة المركبة.');
+      }
     }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'Cairo',
-          ),
-        ),
-        backgroundColor: widget.isDarkMode ? Colors.red[700] : Colors.red,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
-
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      appBar: AppBar(
+        title: Text(
+          'إضافة مركبة جديدة',
+          style: TextStyle(
+            color: textColor,
+            fontFamily: 'Cairo',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              Stack(
-                children: [
-                  Container(
-                    height: screenHeight * 0.25,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.05),
+              // Manufacturer Field
+              Text(
+                'الشركة المصنعة',
+                style: TextStyle(
+                  color: textColor,
+                  fontFamily: 'Cairo',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              GestureDetector(
+                onTap: _showManufacturerPopup,
+                child: AbsorbPointer(
+                  child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF4CB8C4), Color(0xFF3CD3AD)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(50),
-                        bottomRight: Radius.circular(50),
-                      ),
+                      color: fieldColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor),
                       boxShadow: [
                         BoxShadow(
-                          color: shadowColor,
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+                          color: shadowColor.withValues(alpha:0.1),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Text(
-                        'إضافة مركبة جديدة',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.06,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Cairo',
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _manufacturerController,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              hintText: 'اختر الشركة المصنعة',
+                              hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo'),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: TextStyle(color: textColor, fontFamily: 'Cairo'),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'الرجاء اختيار الشركة المصنعة';
+                              }
+                              return null;
+                            },
+                          ),
                         ),
+                        Icon(Icons.arrow_drop_down, color: textColor),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              // Model Field
+              Text(
+                'الموديل',
+                style: TextStyle(
+                  color: textColor,
+                  fontFamily: 'Cairo',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              GestureDetector(
+                onTap: _showModelPopup,
+                child: AbsorbPointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: fieldColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: shadowColor.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _modelController,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              hintText: 'اختر الموديل',
+                              hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo'),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: TextStyle(color: textColor, fontFamily: 'Cairo'),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'الرجاء اختيار الموديل';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down, color: textColor),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              // Plate Number Fields
+              Text(
+                'رقم اللوحة',
+                style: TextStyle(
+                  color: textColor,
+                  fontFamily: 'Cairo',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  // First Letter
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: fieldColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor.withValues(alpha:0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _firstLetterController,
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        textCapitalization: TextCapitalization.characters,
+                        keyboardType: TextInputType.text,
+                        style: TextStyle(color: textColor, fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                          hintText: 'ح',
+                          hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo', fontSize: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return ''; // No error message for empty single field
+                          } else if (!isArabicLetter(value)) {
+                            return ''; // No error message for invalid single field
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          if (value.length == 1) {
+                            FocusScope.of(context).nextFocus();
+                          }
+                        },
                       ),
                     ),
                   ),
-                  // Back Button
-                  Positioned(
-                    top: screenHeight * 0.02,
-                    right: screenWidth * 0.05,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: EdgeInsets.all(screenWidth * 0.02),
-                        decoration: BoxDecoration(
-                          color: widget.isDarkMode
-                              ? Colors.black.withValues(alpha:0.3)
-                              : Colors.white.withValues(alpha:0.7),
-                          shape: BoxShape.circle,
+                  // Second Letter
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: fieldColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor.withValues(alpha:0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _secondLetterController,
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        textCapitalization: TextCapitalization.characters,
+                        keyboardType: TextInputType.text,
+                        style: TextStyle(color: textColor, fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                          hintText: 'ر',
+                          hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo', fontSize: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: Icon(
-                          HugeIcons.strokeRoundedArrowRight01,
-                          color: widget.isDarkMode ? Colors.white : Colors
-                              .black54,
-                          size: screenWidth * 0.06,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '';
+                          } else if (!isArabicLetter(value)) {
+                            return '';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          if (value.length == 1) {
+                            FocusScope.of(context).nextFocus();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  // Third Letter
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: fieldColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor.withValues(alpha:0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _thirdLetterController,
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        textCapitalization: TextCapitalization.characters,
+                        keyboardType: TextInputType.text,
+                        style: TextStyle(color: textColor, fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                          hintText: 'ف',
+                          hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo', fontSize: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '';
+                          } else if (!isArabicLetter(value)) {
+                            return '';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          if (value.length == 1) {
+                            FocusScope.of(context).nextFocus();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  // Plate Numbers
+                  SizedBox(width:5),
+                  Expanded(flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: fieldColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor.withValues(alpha:0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _plateNumbersController,
+                        textAlign: TextAlign.center,
+                        maxLength: 4,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: textColor, fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                          hintText: '1234',
+                          hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo', fontSize: 20),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '';
+                          } else if (convertArabicToEnglishNumbers(value).length != 4 || !numbersPattern.hasMatch(value)) {
+                            return '';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ),
                 ],
               ),
-              // Form
-              Padding(
-                padding: EdgeInsets.all(screenWidth * 0.05),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _buildManufacturerField(),
-                      SizedBox(height: screenHeight * 0.02),
-                      _buildModelField(),
-                      SizedBox(height: screenHeight * 0.02),
-                      _buildYearField(),
-                      SizedBox(height: screenHeight * 0.02),
-                      _buildSaudiLicensePlate(),
-                      SizedBox(height: screenHeight * 0.03),
-                      _buildSubmitButton(screenHeight, screenWidth),
-                    ],
+              // Combined Plate Number Validator (for overall validation message)
+              Builder(
+                builder: (BuildContext context) {
+                  final String firstLetter = _firstLetterController.text;
+                  final String secondLetter = _secondLetterController.text;
+                  final String thirdLetter = _thirdLetterController.text;
+                  final String plateNumbers = _plateNumbersController.text;
+
+                  if (firstLetter.isEmpty || secondLetter.isEmpty || thirdLetter.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'الرجاء إدخال ثلاثة أحرف للوحة.',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    );
+                  } else if (!isArabicLetter(firstLetter) || !isArabicLetter(secondLetter) || !isArabicLetter(thirdLetter)) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'الرجاء إدخال أحرف عربية صحيحة.',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    );
+                  } else if (plateNumbers.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'الرجاء إدخال أربعة أرقام للوحة.',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    );
+                  } else if (convertArabicToEnglishNumbers(plateNumbers).length != 4 || !numbersPattern.hasMatch(plateNumbers)) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'الرجاء إدخال أربعة أرقام صحيحة للوحة.',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    );
+                  }
+                  return SizedBox.shrink();
+                },
+              ),
+              SizedBox(height: 16),
+
+              // Year Field
+              Text(
+                'سنة الصنع',
+                style: TextStyle(
+                  color: textColor,
+                  fontFamily: 'Cairo',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: fieldColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: shadowColor.withValues(alpha:0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextFormField(
+                  controller: _yearController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: textColor, fontFamily: 'Cairo'),
+                  decoration: InputDecoration(
+                    hintText: 'أدخل سنة الصنع (مثال: 2023)',
+                    hintStyle: TextStyle(color: hintColor, fontFamily: 'Cairo'),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'الرجاء إدخال سنة الصنع';
+                    }
+                    final year = int.tryParse(convertArabicToEnglishNumbers(value));
+                    if (year == null || year < 1900 || year > DateTime.now().year + 1) {
+                      return 'الرجاء إدخال سنة صنع صالحة';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              SizedBox(height: 24),
+
+              // Add Vehicle Button
+              ScaleTransition(
+                scale: _buttonScale,
+                child: ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                    _buttonController.forward().then((_) => _buttonController.reverse());
+                    await _addVehicle();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    backgroundColor: Color(0xFF3CD3AD), // Button background color
+                    foregroundColor: Colors.white, // Text color
+                    elevation: 5,
+                    shadowColor: Color(0xFF3CD3AD).withValues(alpha:0.4),
+                  ),
+                  child: _isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                    'إضافة المركبة',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
                 ),
               ),
@@ -930,9 +904,5 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
       ),
     );
   }
-
-  bool isArabicLetter(String letter) {
-    // تحقق مما إذا كان الحرف هو حرف عربي
-    return RegExp(r'^[\u0621-\u064A]$').hasMatch(letter);
-  }
 }
+

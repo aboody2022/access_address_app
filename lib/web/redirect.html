@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فتح التطبيق</title>
+</head>
+<body>
+<h1>🏠 عنوان الوصول</h1>
+<p>جاري فتح التطبيق...</p>
+<button onclick="openApp()">فتح التطبيق يدوياً</button>
+
+<script>
+    function openApp() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const type = urlParams.get('type');
+
+        const deepLink = `accessaddress://reset-password?token=${token}&type=${type}`;
+        console.log('فتح:', deepLink);
+        window.location.href = deepLink;
+    }
+
+    // فتح التطبيق تلقائياً
+    setTimeout(openApp, 1000);
+</script>
+</body>
+</html>

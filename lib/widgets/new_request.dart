@@ -21,10 +21,10 @@ class NewRequestModal extends StatefulWidget {
   final bool isDarkMode;
 
   const NewRequestModal({
-    Key? key,
+    super.key,
     this.userData,
     required this.isDarkMode,
-  }) : super(key: key);
+  });
 
   @override
   State<NewRequestModal> createState() => _NewRequestModalState();
@@ -540,7 +540,7 @@ class _NewRequestModalState extends State<NewRequestModal> {
         orElse: () => {'model_name': 'غير معروف'},
       );
 
-      final String phoneNumber = '966543313881';
+      final String phoneNumber = '966507274427';
       final String message = '''طلب جديد:
 اسم العميل: $fname
 رقم الهاتف: $userPhone
@@ -581,7 +581,6 @@ class _NewRequestModalState extends State<NewRequestModal> {
       backgroundColor: type == SnackBarType.fail ? Colors.red : Colors.green,
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -591,132 +590,161 @@ class _NewRequestModalState extends State<NewRequestModal> {
           color: backgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              left: 16,
-              right: 16,
-              top: 16,
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // شريط الإغلاق العلوي
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Center(
-                    child: GestureDetector(
-                      onVerticalDragUpdate: (details) {
-                        if (details.primaryDelta! > 10) {
-                          Navigator.of(context).pop(); // إغلاق النافذة عند السحب لأسفل
-                        }
-                      },
-
-                      child: Dismissible(
-                        key: Key('new-request-modal'),
-                        direction: DismissDirection.down,
-                        onDismissed: (direction) {
-                          Navigator.of(context).pop(); // إغلاق النافذة عند السحب لأسفل
-                        },
-                        child: Container(
-                          width: 100,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: widget.isDarkMode
-                                ? Colors.grey[700]
-                                : Colors.grey[300],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
+                  // زر الإغلاق
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close,
+                      color: textColor,
+                      size: 24,
+                    ),
+                  ),
+                  // مؤشر السحب
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    onPanUpdate: (details) {
+                      // إغلاق عند السحب لأسفل
+                      if (details.delta.dy > 5) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: widget.isDarkMode
+                            ? Colors.grey[600]
+                            : Colors.grey[400],
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('نوع الطلب'),
-                  _buildRadioTile(
-                    'صيانة دورية',
-                    RequestTypes.PERIODIC,
-                    requestType,
-                    (value) => setState(() => requestType = value),
-                  ),
-                  _buildRadioTile(
-                    'حوادث / أعطال',
-                    RequestTypes.EMERGENCY,
-                    requestType,
-                    (value) => setState(() => requestType = value),
-                  ),
-                  if (requestType != null) ...[
-                    _buildSectionTitle('مقدم الخدمة'),
-                    _buildRadioTile(
-                      'وكالة',
-                      ServiceProviders.AGENCY,
-                      serviceProvider,
-                      (value) => setState(() => serviceProvider = value),
-                    ),
-                    _buildRadioTile(
-                      'ورش',
-                      ServiceProviders.WORKSHOP,
-                      serviceProvider,
-                      (value) => setState(() => serviceProvider = value),
-                    ),
-                  ],
-                  if (serviceProvider != null) ...[
-                    _buildSectionTitle('تفاصيل المركبة'),
-                    _buildVehicleModelSection(),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: notesController,
-                      maxLines: 3,
-                      style: TextStyle(color: textColor),
-                      decoration: _getInputDecoration(
-                        'وصف المشكلة',
-                        'اكتب أي ملاحظات تبي تضيفها',
-                      ),
-                    ),
-                    _buildSectionTitle('موقع الاستلام'),
-                    TextFormField(
-                      controller: locationController,
-                      style: TextStyle(color: textColor),
-                      decoration: _getInputDecoration(
-                        'الموقع',
-                        'حدد موقع استلام السيارة',
-                      ),
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'يرجى تحديد الموقع' : null,
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  if (serviceProvider != null)
-                    Container(
-                      width: double.infinity,
-                      height: 56,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                        onPressed: _isLoading ? null : _submitForm,
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
-                            : const Text(
-                                'إرسال الطلب',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
-                      ),
-                    ),
+                  // مساحة فارغة للتوازن
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
-          ),
+
+            // المحتوى الرئيسي
+            Flexible(
+              child: GestureDetector(
+                // إغلاق عند السحب لأسفل في أي مكان
+                onPanUpdate: (details) {
+                  if (details.delta.dy > 8) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                      left: 16,
+                      right: 16,
+                      top: 8,
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle('نوع الطلب'),
+                          _buildRadioTile(
+                            'صيانة دورية',
+                            RequestTypes.PERIODIC,
+                            requestType,
+                                (value) => setState(() => requestType = value),
+                          ),
+                          _buildRadioTile(
+                            'حوادث / أعطال',
+                            RequestTypes.EMERGENCY,
+                            requestType,
+                                (value) => setState(() => requestType = value),
+                          ),
+                          if (requestType != null) ...[
+                            _buildSectionTitle('مقدم الخدمة'),
+                            _buildRadioTile(
+                              'وكالة',
+                              ServiceProviders.AGENCY,
+                              serviceProvider,
+                                  (value) => setState(() => serviceProvider = value),
+                            ),
+                            _buildRadioTile(
+                              'ورش',
+                              ServiceProviders.WORKSHOP,
+                              serviceProvider,
+                                  (value) => setState(() => serviceProvider = value),
+                            ),
+                          ],
+                          if (serviceProvider != null) ...[
+                            _buildSectionTitle('تفاصيل المركبة'),
+                            _buildVehicleModelSection(),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: notesController,
+                              maxLines: 3,
+                              style: TextStyle(color: textColor),
+                              decoration: _getInputDecoration(
+                                'وصف المشكلة',
+                                'اكتب أي ملاحظات تبي تضيفها',
+                              ),
+                            ),
+                            _buildSectionTitle('موقع الاستلام'),
+                            TextFormField(
+                              controller: locationController,
+                              style: TextStyle(color: textColor),
+                              decoration: _getInputDecoration(
+                                'الموقع',
+                                'حدد موقع استلام السيارة',
+                              ),
+                              validator: (value) =>
+                              value?.isEmpty ?? true ? 'يرجى تحديد الموقع' : null,
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                          if (serviceProvider != null)
+                            Container(
+                              width: double.infinity,
+                              height: 56,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                onPressed: _isLoading ? null : _submitForm,
+                                child: _isLoading
+                                    ? const CircularProgressIndicator(
+                                    color: Colors.white)
+                                    : const Text(
+                                  'إرسال الطلب',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

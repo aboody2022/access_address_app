@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>$(DEVELOPMENT_LANGUAGE )</string>
 	<key>CFBundleDisplayName</key>
 	<string>عنوان الوصول</string>
 	<key>CFBundleExecutable</key>
@@ -47,5 +47,19 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
     <string>نحتاج إلى استخدام المصادقة البيومترية لتسجيل الدخول بشكل آمن</string>
+
+	<!-- إضافة إعدادات الروابط العميقة (Deep Links) هنا -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>accessaddress</string> <!-- هذا هو مخطط URL الخاص بك -->
+			</array>
+		</dict>
+	</array>
+
 </dict>
 </plist>

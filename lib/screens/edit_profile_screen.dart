@@ -843,7 +843,33 @@ class EditProfileScreenState extends State<EditProfileScreen> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            automaticallyImplyLeading: false,
+            automaticallyImplyLeading: false, // نتركها false لأننا نضيف زر مخصص
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Material(
+                color: widget.isDarkMode
+                    ? const Color(0xFF2D3748).withOpacity(0.7) // خلفية داكنة شفافة
+                    : const Color(0xFF3CD3AD).withOpacity(0.3), // خلفية خضراء فاتحة شفافة
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  splashColor: widget.isDarkMode
+                      ? Colors.tealAccent.withOpacity(0.3)
+                      : Colors.white.withOpacity(0.3),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.close,
+                      color: widget.isDarkMode ? Colors.white : Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             title: Text(
               'تعديل الملف الشخصي',
               style: GoogleFonts.cairo(
@@ -914,7 +940,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
         color: widget.isDarkMode ? Colors.grey[800] : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -1002,8 +1028,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: widget.isDarkMode
-            ? Colors.white.withOpacity(0.05)
-            : Colors.white.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(
           color: widget.isDarkMode ? Colors.white24 : Colors.white30,
@@ -1031,7 +1057,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
               });
             },
             activeColor: widget.isDarkMode ? Colors.tealAccent : const Color(0xFF3CD3AD),
-            activeTrackColor: widget.isDarkMode ? Colors.tealAccent.withOpacity(0.5) : const Color(0xFF4CB8C4).withOpacity(0.5),
+            activeTrackColor: widget.isDarkMode ? Colors.tealAccent.withValues(alpha: 0.5) : const Color(0xFF4CB8C4).withValues(alpha: 0.5),
           ),
         ],
       ),
@@ -1188,8 +1214,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
       ),
       filled: true,
       fillColor: widget.isDarkMode
-          ? Colors.white.withOpacity(0.05)
-          : Colors.white.withOpacity(0.1),
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.white.withValues(alpha: 0.1),
     );
   }
 

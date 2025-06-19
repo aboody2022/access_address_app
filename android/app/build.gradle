@@ -97,8 +97,8 @@ android {
         targetSdk = flutter.targetSdkVersion
 //        versionCode = flutter.versionCode
 //        versionName = flutter.versionName
-        versionCode = 2         // 👈 رقم تصاعدي جديد
-        versionName = "1.0.1"   // 👈 اسم النسخة الجديدة
+        versionCode = 3         // 👈 رقم تصاعدي جديد
+        versionName = "1.0.2"   // 👈 اسم النسخة الجديدة
     }
 
     signingConfigs {

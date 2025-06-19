@@ -329,7 +329,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           // استدعاء شاشة استعادة كلمة المرور وانتظار النتيجة
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+            MaterialPageRoute(builder: (context) =>  ForgotPasswordScreen()),
           );
 
           // التحقق من وجود اسم مستخدم مرجع

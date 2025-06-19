@@ -1,322 +1,34 @@
+import 'package:access_address_app/screens/login_page.dart';
+import 'package:access_address_app/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/services.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:auto_animated/auto_animated.dart';
-import 'package:crypt/crypt.dart';
+import 'dart:async';
+import '../services/otp_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
-/// خدمة التشفير لعمليات استعادة كلمة المرور
-class PasswordCryptService {
-  // نوع التشفير المستخدم (SHA-256)
-  static const _cryptType = Crypt.sha256;
-
-  // عدد جولات التشفير
-  static const _rounds = 10000;
-
-  /// تشفير كلمة المرور الجديدة
-  static String encryptPassword(String password) {
-    final crypt = Crypt.sha256(password, rounds: _rounds);
-    return crypt.toString();
-  }
-
-  /// التحقق من تطابق كلمة المرور مع النسخة المشفرة
-  static bool verifyPassword(String password, String hashedPassword) {
-    try {
-      final crypt = Crypt(hashedPassword);
-      return crypt.match(password);
-    } catch (e) {
-      print('خطأ في التحقق من كلمة المرور: $e');
-      return false;
-    }
-  }
-
-  /// تشفير إجابة سؤال الأمان
-  static String encryptSecurityAnswer(String answer) {
-    final normalizedAnswer = answer.trim().toLowerCase();
-    return encryptPassword(normalizedAnswer);
-  }
-
-  /// التحقق من صحة إجابة سؤال الأمان
-  static bool verifySecurityAnswer(String answer, String hashedAnswer) {
-    final normalizedAnswer = answer.trim().toLowerCase();
-    return verifyPassword(normalizedAnswer, hashedAnswer);
-  }
-
-
-  /// التحقق من قوة كلمة المرو
-  static bool isStrongPassword(String password) {
-    if (password.length < 6) return false;
-    if (!password.contains(RegExp(r'[A-Z]'))) return false;
-    if (!password.contains(RegExp(r'[a-z]'))) return false;
-    if (!password.contains(RegExp(r'[0-9]'))) return false;
-    if (!password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]'))) return false;
-    return true;
-  }
-
-  /// الحصول على رسالة تقييم قوة كلمة المرور
-  static String getPasswordStrengthMessage(String password) {
-    if (password.isEmpty) return '';
-
-    int strength = 0;
-
-    if (password.length >= 8) strength++; // الطول الجيد
-    if (password.contains(RegExp(r'[A-Z]'))) strength++; // حرف كبير
-    if (password.contains(RegExp(r'[a-z]'))) strength++; // حرف صغير
-    if (password.contains(RegExp(r'[0-9]'))) strength++; // رقم
-    if (password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]'))) strength++; // رمز خاص
-
-    switch (strength) {
-      case 0:
-      case 1:
-        return 'كلمة المرور ضعيفة جداً';
-      case 2:
-        return 'كلمة المرور ضعيفة';
-      case 3:
-        return 'كلمة المرور متوسطة';
-      case 4:
-        return 'كلمة المرور قوية';
-      case 5:
-        return 'كلمة المرور قوية جداً';
-      default:
-        return 'كلمة المرور غير صالحة';
-    }
-  }
-
-  /// الحصول على لون تقييم قوة كلمة المرور
-  static Color getPasswordStrengthColor(String password, bool isDarkMode) {
-    if (password.isEmpty) return Colors.grey;
-
-    int strength = 0;
-
-    if (password.length >= 8) strength++;
-    if (password.contains(RegExp(r'[A-Z]'))) strength++;
-    if (password.contains(RegExp(r'[a-z]'))) strength++;
-    if (password.contains(RegExp(r'[0-9]'))) strength++;
-    if (password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]'))) strength++;
-
-    switch (strength) {
-      case 1:
-      case 2:
-        return Color(0xffE50046);
-      case 3:
-        return Color(0xffFFA725);
-      case 4:
-        return Color(0xff67AE6E);
-      case 5:
-        return Color(0xff3F7D58);
-      default:
-        return Colors.grey;
-    }
-  }
+// تعريف خطوات الاستعادة
+enum RecoveryStep {
+  findUser,
+  chooseMethod,
+  securityQuestion,
+  contactCompany,
 }
 
-/// تكوين السمات للتطبيق (الوضع الليلي والنهاري)
-class ThemeConfig {
-  // الألوان الأساسية المحددة
-  static const Color primaryColor = Color(0xFF3CD3AD);
-  static const Color secondaryColor = Color(0xFF4CB8C4);
-
-  // تدرج الألوان للأزرار والعناصر التفاعلية
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryColor, secondaryColor],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  // سمة الوضع النهاري
-  static ThemeData get lightTheme {
-    return ThemeData(
-      brightness: Brightness.light,
-      primaryColor: primaryColor,
-      scaffoldBackgroundColor: Colors.white,
-      colorScheme: ColorScheme.light(
-        primary: primaryColor,
-        secondary: secondaryColor,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        background: Colors.white,
-        onBackground: Colors.black,
-        surface: Colors.white,
-        onSurface: Colors.black87,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          elevation: 2,
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.grey[100],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.red, width: 1),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(color: Colors.black87),
-        displayMedium: TextStyle(color: Colors.black87),
-        displaySmall: TextStyle(color: Colors.black87),
-        headlineMedium: TextStyle(color: Colors.black87),
-        headlineSmall: TextStyle(color: Colors.black87),
-        titleLarge: TextStyle(color: Colors.black87),
-        titleMedium: TextStyle(color: Colors.black87),
-        titleSmall: TextStyle(color: Colors.black87),
-        bodyLarge: TextStyle(color: Colors.black87),
-        bodyMedium: TextStyle(color: Colors.black87),
-        bodySmall: TextStyle(color: Colors.black54),
-        labelLarge: TextStyle(color: Colors.black87),
-      ),
-      dividerTheme: DividerThemeData(
-        color: Colors.grey[300],
-        thickness: 1,
-      ),
-      cardTheme: CardTheme(
-        color: Colors.white,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-
-  // سمة الوضع الليلي
-  static ThemeData get darkTheme {
-    return ThemeData(
-      brightness: Brightness.dark,
-      primaryColor: primaryColor,
-      scaffoldBackgroundColor: const Color(0xFF121212),
-      colorScheme: const ColorScheme.dark(
-        primary: primaryColor,
-        secondary: secondaryColor,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        background: Color(0xFF121212),
-        onBackground: Colors.white,
-        surface: Color(0xFF1E1E1E),
-        onSurface: Colors.white,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          elevation: 2,
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFF2A2A2A),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF444444)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF444444)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.red, width: 1),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        labelStyle: const TextStyle(color: Colors.white70),
-        hintStyle: const TextStyle(color: Colors.white38),
-      ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(color: Colors.white),
-        displayMedium: TextStyle(color: Colors.white),
-        displaySmall: TextStyle(color: Colors.white),
-        headlineMedium: TextStyle(color: Colors.white),
-        headlineSmall: TextStyle(color: Colors.white),
-        titleLarge: TextStyle(color: Colors.white),
-        titleMedium: TextStyle(color: Colors.white),
-        titleSmall: TextStyle(color: Colors.white),
-        bodyLarge: TextStyle(color: Colors.white),
-        bodyMedium: TextStyle(color: Colors.white),
-        bodySmall: TextStyle(color: Colors.white70),
-        labelLarge: TextStyle(color: Colors.white),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: Color(0xFF444444),
-        thickness: 1,
-      ),
-      cardTheme: CardTheme(
-        color: const Color(0xFF1E1E1E),
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-}
-
-/// شاشة استعادة كلمة المرور
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  // متغيرات للتحكم في حالة الشاشة
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _answerController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _emailController = TextEditingController();
 
   // حالة الشاشة الحالية
   RecoveryStep _currentStep = RecoveryStep.findUser;
@@ -330,16 +42,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   String? _errorMessage;
   String? _successMessage;
 
-  // حالة إظهار كلمة المرور
-  bool _isNewPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
+  // متغيرات طريقة الاستعادة
+  String _recoveryMethod = 'security'; // 'security' أو 'email'
 
   @override
   void dispose() {
     _usernameController.dispose();
     _answerController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -356,47 +66,105 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     await HapticFeedback.lightImpact();
 
     try {
-      // استعلام Supabase للبحث عن المستخدم وجلب سؤال الأمان
+      // استعلام Supabase للبحث عن المستخدم باسم المستخدم أو البريد الإلكتروني
       final response = await Supabase.instance.client
           .from('users')
           .select('user_id, username, email, security_question, full_name')
-          .eq('username', _usernameController.text)
-          .single();
+          .or('username.eq.${_usernameController.text},email.eq.${_usernameController.text.toLowerCase()}')
+          .maybeSingle();
 
-      if (response.isNotEmpty) {
+      if (response != null && response.isNotEmpty) {
         setState(() {
           _foundUsername = response['username'];
           _securityQuestion = response['security_question'];
           _userId = response['user_id'];
           _userEmail = response['email'];
-          _currentStep = RecoveryStep.securityQuestion;
+          _emailController.text = response['email'] ?? '';
+          _currentStep = RecoveryStep.chooseMethod;
         });
       } else {
-        // إذا لم يتم العثور على المستخدم باسم المستخدم، نحاول البحث بالبريد الإلكتروني
-        final emailResponse = await Supabase.instance.client
-            .from('users')
-            .select('user_id, username, email, security_question, full_name')
-            .eq('email', _usernameController.text)
-            .single();
-
-        if (emailResponse.isNotEmpty) {
-          setState(() {
-            _foundUsername = emailResponse['username'];
-            _securityQuestion = emailResponse['security_question'];
-            _userId = emailResponse['user_id'];
-            _userEmail = emailResponse['email'];
-            _currentStep = RecoveryStep.securityQuestion;
-          });
-        } else {
-          setState(() {
-            _errorMessage = "لم يتم العثور على المستخدم";
-          });
-        }
+        setState(() {
+          _errorMessage = "لم يتم العثور على المستخدم";
+        });
       }
     } catch (e) {
       print('خطأ في البحث عن المستخدم: $e');
       setState(() {
         _errorMessage = "حدث خطأ أثناء البحث عن المستخدم";
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // دالة لإرسال رابط إعادة تعيين كلمة المرور عبر البريد الإلكتروني
+  Future<void> _sendPasswordResetEmail() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    await HapticFeedback.lightImpact();
+
+    try {
+      // استخدام OTPService لإرسال رابط إعادة تعيين كلمة المرور
+      final result = await OTPService.sendPasswordResetEmail(_userEmail!);
+      if (result["success"] == true) {
+        setState(() {
+          _successMessage = result["message"] ??
+              "تم إرسال رابط إعادة تعيين كلمة المرور بنجاح إلى بريدك الإلكتروني.";
+        });
+
+        // عرض شاشة منبثقة بدلاً من الانتقال التلقائي
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false, // يمنع إغلاق الشاشة بالنقر خارجها
+            builder: (BuildContext dialogContext) {
+              final isDarkMode = AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark;
+              return AlertDialog(
+                backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+                title: Text(
+                  "تحقق من بريدك الإلكتروني",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى \n${_userEmail!}.\n\nيرجى النقر على الرابط في البريد الإلكتروني لإكمال عملية إعادة تعيين كلمة المرور.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text(
+                      "حسناً",
+                      style: TextStyle(color: isDarkMode ? Color(0xff2AB0BF) : Colors.blue),
+                    ),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(); // إغلاق الشاشة المنبثقة
+                      Navigator.of(context).pop(); // العودة إلى الشاشة السابقة (عادةً شاشة تسجيل الدخول)
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } else {
+        setState(() {
+          _errorMessage = result["error"] ?? "فشل في إرسال رابط إعادة تعيين كلمة المرور";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "حدث خطأ غير متوقع: ${e.toString()}";
       });
     } finally {
       setState(() {
@@ -418,40 +186,33 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     await HapticFeedback.lightImpact();
 
     try {
-      // استعلام Supabase للحصول على إجابة سؤال الأمان المخزنة
-      final response = await Supabase.instance.client
-          .from('users')
-          .select('answer_security_qu, email')
-          .eq('user_id', _userId!)
-          .single();
+      // استخدام OTPService للتحقق من إجابة سؤال الأمان
+      final result = await OTPService.verifySecurityAnswer(
+        _userEmail!,
+        _answerController.text.trim(),
+      );
 
-      if (response.isNotEmpty) {
-        final hashedAnswer = response['answer_security_qu'];
-
-        print(hashedAnswer);
-        // التحقق من صحة الإجابة
-        // final isCorrect = PasswordCryptService.verifySecurityAnswer(
-        //     _answerController.text,
-        //     hashedAnswer
-        // );
-
-        if (hashedAnswer!=null) {
-          setState(() {
-            _currentStep = RecoveryStep.resetPassword;
-            _successMessage = "تم التحقق من إجابة سؤال الأمان بنجاح. يمكنك الآن إعادة تعيين كلمة المرور.";
-          });
-        } else {
-          setState(() {
-            _errorMessage = "الإجابة غير صحيحة";
-          });
+      if (result["success"] == true) {
+        setState(() {
+          _successMessage = "تم التحقق من إجابة سؤال الأمان بنجاح. يرجى الآن إعادة تعيين كلمة المرور في الشاشة التالية.";
+        });
+        // بعد التحقق من سؤال الأمان، يجب توجيه المستخدم إلى شاشة إدخال كلمة المرور الجديدة
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResetPasswordScreen(email: _userEmail), // تمرير البريد الإلكتروني
+            ),
+          ); // التوجيه إلى شاشة إعادة تعيين كلمة المرور
         }
       } else {
         setState(() {
-          _errorMessage = "حدث خطأ أثناء التحقق من الإجابة";
+          _errorMessage = result["error"] ?? "إجابة سؤال الأمان غير صحيحة";
         });
       }
     } catch (e) {
-      print('خطأ في التحقق من الإجابة: $e');
+      print("خطأ في التحقق من الإجابة: $e");
       setState(() {
         _errorMessage = "حدث خطأ أثناء التحقق من الإجابة";
       });
@@ -462,68 +223,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
-  // دالة لإعادة تعيين كلمة المرور
-  Future<void> _resetPassword() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _successMessage = null;
-    });
-
-    await HapticFeedback.mediumImpact();
-
-    try {
-      // تشفير كلمة المرور الجديدة
-      final hashedPassword = PasswordCryptService.encryptPassword(_newPasswordController.text);
-
-      // تحديث كلمة المرور في قاعدة البيانات
-  await Supabase.instance.client
-          .from('users')
-          .update({'password': hashedPassword})
-          .eq('user_id', _userId!);
-
-      setState(() {
-        _successMessage = "تم إعادة تعيين كلمة المرور بنجاح!";
-      });
-
-      // بدلاً من العودة إلى شاشة البحث عن المستخدم
-      await Future.delayed(const Duration(seconds: 3));
-
-      if (mounted) {
-        // العودة إلى شاشة تسجيل الدخول مع إرسال اسم المستخدم
-        Navigator.pop(context, _foundUsername);
-      }
-
-
-      if (mounted) {
-        setState(() {
-          _currentStep = RecoveryStep.findUser;
-          _usernameController.clear();
-          _answerController.clear();
-          _newPasswordController.clear();
-          _confirmPasswordController.clear();
-          _foundUsername = null;
-          _securityQuestion = null;
-          _userId = null;
-          _userEmail = null;
-          _successMessage = null;
-          _isNewPasswordVisible = false;
-          _isConfirmPasswordVisible = false;
-        });
-      }
-    } catch (e) {
-      print('خطأ في إعادة تعيين كلمة المرور: $e');
-      setState(() {
-        _errorMessage = "حدث خطأ أثناء إعادة تعيين كلمة المرور";
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
   // دالة للانتقال إلى خيار الاتصال بالشركة
   void _switchToContactOption() {
     setState(() {
@@ -544,19 +243,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     HapticFeedback.lightImpact();
   }
 
-  // دالة للعودة إلى البحث عن المستخدم
-  void _backToFindUser() {
+  // دالة للعودة إلى اختيار الطريقة
+  void _backToChooseMethod() {
     setState(() {
-      _currentStep = RecoveryStep.findUser;
+      _currentStep = RecoveryStep.chooseMethod;
       _errorMessage = null;
       _successMessage = null;
     });
     HapticFeedback.lightImpact();
   }
 
+  // دالة للعودة إلى البحث عن المستخدم
+  void _backToFindUser() {
+    setState(() {
+      _currentStep = RecoveryStep.findUser;
+      _errorMessage = null;
+      _successMessage = null;
+      _usernameController.clear();
+      _answerController.clear();
+      _emailController.clear();
+      _foundUsername = null;
+      _securityQuestion = null;
+      _userId = null;
+      _userEmail = null;
+    });
+    HapticFeedback.lightImpact();
+  }
+
   // دالة لفتح تطبيق الهاتف للاتصال برقم الشركة
   Future<void> _callCompany() async {
-    final Uri phoneUri = Uri(scheme: 'tel', path: '+966543313881');
+    final Uri phoneUri = Uri(scheme: "tel", path: "+966543313881");
     await HapticFeedback.mediumImpact();
     if (await canLaunchUrl(phoneUri)) {
       await launchUrl(phoneUri);
@@ -608,9 +324,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               _usernameController.clear();
             } else if (_currentStep == RecoveryStep.securityQuestion) {
               _answerController.clear();
-            } else if (_currentStep == RecoveryStep.resetPassword) {
-              _newPasswordController.clear();
-              _confirmPasswordController.clear();
             }
             setState(() {
               _errorMessage = null;
@@ -629,7 +342,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       gradient: LinearGradient(
                         colors: isDarkMode
                             ? [Colors.grey[800]!, Colors.grey[900]!]
-                            : [const Color(0xFF4CB8C4), const Color(0xFF3CD3AD)],
+                            : [
+                          const Color(0xFF4CB8C4),
+                          const Color(0xFF3CD3AD)
+                        ],
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
                       ),
@@ -642,7 +358,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          HugeIcons.strokeRoundedResetPassword,
+                          Icons.lock_reset,
                           size: size.width * 0.2,
                           color: Colors.white,
                         ),
@@ -686,6 +402,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                             // محتوى الخطوة الحالية
                             _buildCurrentStepContent(size, isDarkMode),
+                            SizedBox(height:25),
+                            _buildBackToLoginButton(size,isDarkMode)
+
                           ],
                         ),
                       ),
@@ -744,9 +463,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: Text(
               message,
               style: TextStyle(
-                color: isError
-                    ? Colors.red
-                    : Colors.green,
+                color: isError ? Colors.red : Colors.green,
               ),
             ),
           ),
@@ -760,10 +477,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     switch (_currentStep) {
       case RecoveryStep.findUser:
         return _buildFindUserStep(size, isDarkMode);
+      case RecoveryStep.chooseMethod:
+        return _buildChooseMethodStep(size, isDarkMode);
       case RecoveryStep.securityQuestion:
         return _buildSecurityQuestionStep(size, isDarkMode);
-      case RecoveryStep.resetPassword:
-        return _buildResetPasswordStep(size, isDarkMode);
       case RecoveryStep.contactCompany:
         return _buildContactCompanyStep(size, isDarkMode);
     }
@@ -771,768 +488,481 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   // بناء خطوة البحث عن المستخدم
   Widget _buildFindUserStep(Size size, bool isDarkMode) {
-    return LiveList(
-      showItemInterval: const Duration(milliseconds: 100),
-      showItemDuration: const Duration(milliseconds: 300),
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: 2,
-      itemBuilder: (context, index, animation) {
-        Widget child;
-
-        if (index == 0) {
-          // بطاقة الإدخال
-          child = Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode
-                      ? Colors.black.withValues(alpha:0.3)
-                      : Colors.grey.withValues(alpha:0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+    return AnimationLimiter(
+      child: Column(
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 375),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: widget,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "أدخل اسم المستخدم أو البريد الإلكتروني",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
+          ),
+          children: [
+            TextFormField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: "اسم المستخدم أو البريد الإلكتروني",
+                hintText: "أدخل اسم المستخدم أو البريد الإلكتروني الخاص بك",
+                prefixIcon: Icon(Icons.person_outline),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: "اسم المستخدم أو البريد الإلكتروني",
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[100],
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "الرجاء إدخال اسم المستخدم أو البريد الإلكتروني";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _findUser,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      "بحث",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        } else {
-          // زر العودة إلى تسجيل الدخول
-          child = Container(
-            margin: const EdgeInsets.only(top: 10),
-            child: TextButton.icon(
-              icon: const Icon(Icons.arrow_back),
-              label: const Text("العودة إلى تسجيل الدخول"),
-              onPressed: () {
-                // العودة إلى شاشة تسجيل الدخول
-                HapticFeedback.lightImpact();
-                Navigator.pop(context);
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "الرجاء إدخال اسم المستخدم أو البريد الإلكتروني";
+                }
+                return null;
               },
             ),
-          );
-        }
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _findUser,
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: isDarkMode ? Colors.blueGrey[700] : const Color(0xFF4CB8C4),
+                foregroundColor: Colors.white,
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("بحث عن المستخدم"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.3),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
+  // بناء خطوة اختيار طريقة الاستعادة
+  Widget _buildChooseMethodStep(Size size, bool isDarkMode) {
+    return AnimationLimiter(
+      child: Column(
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 375),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: widget,
+            ),
           ),
-        );
-      },
+          children: [
+            Text(
+              "مرحباً بك، $_foundUsername! كيف تود استعادة كلمة المرور؟",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: size.width * 0.045,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 30),
+            _buildRecoveryMethodCard(
+              icon: Icons.email_outlined,
+              title: "عبر البريد الإلكتروني",
+              description: "سنرسل رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني المسجل.",
+              method: 'email',
+              currentMethod: _recoveryMethod,
+              onTap: () {
+                setState(() {
+                  _recoveryMethod = 'email';
+                });
+                _sendPasswordResetEmail();
+              },
+              isDarkMode: isDarkMode,
+            ),
+            const SizedBox(height: 20),
+            _buildRecoveryMethodCard(
+              icon: Icons.security_outlined,
+              title: "عبر سؤال الأمان",
+              description: "أجب عن سؤال الأمان الذي قمت بتعيينه مسبقاً.",
+              method: 'security',
+              currentMethod: _recoveryMethod,
+              onTap: () {
+                setState(() {
+                  _recoveryMethod = 'security';
+                  _currentStep = RecoveryStep.securityQuestion;
+                });
+              },
+              isDarkMode: isDarkMode,
+            ),
+            const SizedBox(height: 30),
+            TextButton(
+              onPressed: _backToFindUser,
+              child: Text(
+                "ليس أنا؟ ابحث عن مستخدم آخر",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.blueAccent[200] : Colors.blue,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _switchToContactOption,
+              child: Text(
+                "لا يمكنني استخدام أي من هذه الخيارات",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.blueAccent[200] : Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // بناء بطاقة طريقة الاستعادة
+  Widget _buildRecoveryMethodCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required String method,
+    required String currentMethod,
+    required VoidCallback onTap,
+    required bool isDarkMode,
+  }) {
+    final bool isSelected = method == currentMethod;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDarkMode ? Colors.blueGrey[800] : Colors.blue[50])
+              : (isDarkMode ? Colors.grey[850] : Colors.white),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected
+                ? (isDarkMode ? Colors.blueAccent : Colors.blue)
+                : (isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode ? Colors.black26 : Colors.grey.withValues(alpha:0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: isSelected
+                  ? (isDarkMode ? Colors.blueAccent : Colors.blue)
+                  : (isDarkMode ? Colors.white70 : Colors.grey[600]),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   // بناء خطوة سؤال الأمان
   Widget _buildSecurityQuestionStep(Size size, bool isDarkMode) {
-    return LiveList(
-      showItemInterval: const Duration(milliseconds: 100),
-      showItemDuration: const Duration(milliseconds: 300),
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: 3,
-      itemBuilder: (context, index, animation) {
-        Widget child;
-
-        if (index == 0) {
-          // بطاقة معلومات المستخدم
-          child = Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? Colors.grey[800]!.withValues(alpha:0.8)
-                  : ThemeConfig.primaryColor.withValues(alpha:0.1),
-              borderRadius: BorderRadius.circular(15),
+    return AnimationLimiter(
+      child: Column(
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 375),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: widget,
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: isDarkMode
-                      ? Colors.grey[700]
-                      : ThemeConfig.primaryColor.withValues(alpha:0.2),
-                  child: const Icon(
-                    Icons.person,
-                    color: ThemeConfig.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "المستخدم:",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-                        ),
-                      ),
-                      Text(
-                        _foundUsername ?? "",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        } else if (index == 1) {
-          // بطاقة سؤال الأمان
-          child = Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode
-                      ? Colors.black.withValues(alpha:0.3)
-                      : Colors.grey.withValues(alpha:0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "سؤال الأمان:",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.grey[600]!
-                          : Colors.grey[300]!,
-                    ),
-                  ),
-                  child: Text(
-                    _securityQuestion ?? "",
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isDarkMode ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _answerController,
-                  decoration: InputDecoration(
-                    labelText: "الإجابة",
-                    prefixIcon: const Icon(Icons.question_answer),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[100],
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "الرجاء إدخال الإجابة";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _verifySecurityAnswer,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      "تحقق",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        } else {
-          // أزرار التنقل
-          child = Column(
-            children: [
-              _buildNavigationTile(
-                "تجربة طريقة أخرى",
-                "التواصل مع الشركة",
-                Icons.support_agent,
-                _switchToContactOption,
-                isDarkMode,
-              ),
-              const SizedBox(height: 10),
-              TextButton.icon(
-                icon: const Icon(Icons.arrow_back),
-                label: const Text("العودة وتغيير المستخدم"),
-                onPressed: _backToFindUser,
-              ),
-            ],
-          );
-        }
-
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.3),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
           ),
-        );
-      },
-    );
-  }
-
-  // بناء خطوة إعادة تعيين كلمة المرور
-  Widget _buildResetPasswordStep(Size size, bool isDarkMode) {
-    return LiveList(
-      showItemInterval: const Duration(milliseconds: 100),
-      showItemDuration: const Duration(milliseconds: 300),
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: 3,
-      itemBuilder: (context, index, animation) {
-        Widget child;
-
-        if (index == 0) {
-          // بطاقة معلومات المستخدم
-          child = Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? Colors.grey[800]!.withValues(alpha:0.8)
-                  : ThemeConfig.primaryColor.withValues(alpha:0.1),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: isDarkMode
-                      ? Colors.grey[700]
-                      : ThemeConfig.primaryColor.withValues(alpha:0.2),
-                  child: const Icon(
-                    Icons.person,
-                    color: ThemeConfig.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "المستخدم:",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-                        ),
-                      ),
-                      Text(
-                        _foundUsername ?? "",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        } else if (index == 1) {
-          // بطاقة إعادة تعيين كلمة المرور
-          child = Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode
-                      ? Colors.black.withValues(alpha: 0.3)
-                      : Colors.grey.withValues(alpha:0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "إعادة تعيين كلمة المرور",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // كلمة المرور الجديدة
-                TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: !_isNewPasswordVisible,
-                  decoration: InputDecoration(
-                    labelText: "كلمة المرور الجديدة",
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isNewPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isNewPasswordVisible = !_isNewPasswordVisible;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[100],
-                  ),
-                  onChanged: (value) {
-                    // إعادة بناء الشاشة لتحديث مؤشر قوة كلمة المرور
-                    setState(() {});
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "الرجاء إدخال كلمة المرور الجديدة";
-                    }
-                    if (value.length < 6) {
-                      return "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
-                    }
-                    if (!PasswordCryptService.isStrongPassword(value)) {
-                      return "كلمة المرور ضعيفة، يجب أن تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز";
-                    }
-                    return null;
-                  },
-                ),
-
-                // مؤشر قوة كلمة المرور
-                if (_newPasswordController.text.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: PasswordCryptService.getPasswordStrengthColor(
-                            _newPasswordController.text,
-                            isDarkMode,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          PasswordCryptService.getPasswordStrengthMessage(
-                            _newPasswordController.text,
-                          ),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: PasswordCryptService.getPasswordStrengthColor(
-                              _newPasswordController.text,
-                              isDarkMode,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: 20),
-
-                // تأكيد كلمة المرور الجديدة
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: !_isConfirmPasswordVisible,
-                  decoration: InputDecoration(
-                    labelText: "تأكيد كلمة المرور الجديدة",
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isConfirmPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[100],
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "الرجاء تأكيد كلمة المرور الجديدة";
-                    }
-                    if (value != _newPasswordController.text) {
-                      return "كلمات المرور غير متطابقة";
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                // زر إعادة تعيين كلمة المرور
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _resetPassword,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      "إعادة تعيين كلمة المرور",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-              ],
-            ),
-          );
-        } else {
-          // أزرار التنقل
-          child = Column(
-            children: [
-              _buildNavigationTile(
-                "تجربة طريقة أخرى",
-                "التواصل مع الشركة",
-                Icons.support_agent,
-                _switchToContactOption,
-                isDarkMode,
+          children: [
+            Text(
+              "سؤال الأمان الخاص بك:",
+              style: TextStyle(
+                fontSize: size.width * 0.045,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
               ),
-              const SizedBox(height: 10),
-              TextButton.icon(
-                icon: const Icon(Icons.arrow_back),
-                label: const Text("العودة إلى سؤال الأمان"),
-                onPressed: _backToSecurityQuestion,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _securityQuestion ?? "لا يوجد سؤال أمان محدد.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: size.width * 0.04,
+                color: isDarkMode ? Colors.white70 : Colors.grey[600],
               ),
-            ],
-          );
-        }
-
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.3),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        );
-      },
+            ),
+            const SizedBox(height: 30),
+            TextFormField(
+              controller: _answerController,
+              decoration: InputDecoration(
+                labelText: "إجابتك",
+                hintText: "أدخل إجابة سؤال الأمان",
+                prefixIcon: Icon(Icons.lock_outline),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return "الرجاء إدخال إجابة سؤال الأمان";
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _verifySecurityAnswer,
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: isDarkMode ? Colors.blueGrey[700] : const Color(0xFF4CB8C4),
+                foregroundColor: Colors.white,
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("التحقق من الإجابة"),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: _backToChooseMethod,
+              child: Text(
+                "العودة لاختيار طريقة أخرى",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.blueAccent[200] : Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   // بناء خطوة الاتصال بالشركة
   Widget _buildContactCompanyStep(Size size, bool isDarkMode) {
-    return LiveList(
-      showItemInterval: const Duration(milliseconds: 100),
-      showItemDuration: const Duration(milliseconds: 300),
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: 2,
-      itemBuilder: (context, index, animation) {
-        Widget child;
-
-        if (index == 0) {
-          // بطاقة الاتصال بالشركة
-          child = Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(25),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode
-                      ? Colors.black.withValues(alpha:0.3)
-                      : Colors.grey.withValues(alpha:0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+    return AnimationLimiter(
+      child: Column(
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 375),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: widget,
             ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.support_agent,
-                  size: size.width * 0.2,
-                  color: ThemeConfig.primaryColor,
+          ),
+          children: [
+            Text(
+              "تواصل مع الدعم الفني",
+              style: TextStyle(
+                fontSize: size.width * 0.045,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "إذا لم تتمكن من استعادة كلمة المرور بالطرق المتاحة، يمكنك التواصل مع فريق الدعم الفني للحصول على المساعدة.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: size.width * 0.04,
+                color: isDarkMode ? Colors.white70 : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 30),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[850] : Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  "يمكنك التواصل مع فريق الدعم الفني لاستعادة كلمة المرور",
+                boxShadow: [
+                  BoxShadow(
+                    color: isDarkMode ? Colors.black26 : Colors.grey.withValues(alpha:0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.phone,
+                    size: 50,
+                    color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    "رقم الدعم الفني",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "+966507274427",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.blueAccent : Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    "ساعات العمل: من الأحد إلى الخميس، 9 صباحاً - 5 مساءً",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _callCompany,
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: isDarkMode ? Colors.green[700] : Colors.green,
+                foregroundColor: Colors.white,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.phone),
+                  const SizedBox(width: 10),
+                  Text("اتصل الآن"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: _backToChooseMethod,
+              child: Text(
+                "العودة لاختيار طريقة أخرى",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.blueAccent[200] : Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackToLoginButton(Size size, bool isDarkMode) {
+    final baseColor = !isDarkMode ? Color(0xFF3CD3AD) : Colors.teal.shade600;
+
+    return Center(
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          bool isHovered = false;
+          bool isPressed = false;
+
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => isHovered = true),
+            onExit: (_) => setState(() => isHovered = false),
+            child: GestureDetector(
+              onTapDown: (_) => setState(() => isPressed = true),
+                onTapUp: (_) {
+                  setState(() => isPressed = false);
+                  Navigator.of(context).push(PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => LoginPage(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      const beginOffset = Offset(0.0, 1.0);
+                      const endOffset = Offset.zero;
+                      const curve = Curves.ease;
+
+                      final tween = Tween(begin: beginOffset, end: endOffset).chain(CurveTween(curve: curve));
+                      final fadeTween = Tween<double>(begin: 0.0, end: 1.0);
+
+                      return SlideTransition(
+                        position: animation.drive(tween),
+                        child: FadeTransition(
+                          opacity: animation.drive(fadeTween),
+                          child: child,
+                        ),
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 400),
+                  ));
+                },
+              onTapCancel: () => setState(() => isPressed = false),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(vertical: size.height * 0.015, horizontal: size.width * 0.12),
+                decoration: BoxDecoration(
+                  color: isPressed
+                      ? baseColor.withOpacity(0.2)
+                      : isHovered
+                      ? baseColor.withOpacity(0.1)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: baseColor.withOpacity(0.7), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: baseColor.withOpacity(0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'العودة إلى تسجيل الدخول',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.grey[600]!
-                          : Colors.grey[300]!,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        "رقم الشركة:",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        "966543313881+",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: ThemeConfig.primaryColor,
-                        ),
-                        textAlign:TextAlign.left,
-                      ),
-                    ],
+                    color: baseColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: size.width * 0.045,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 25),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(HugeIcons.strokeRoundedTelephone,color:Colors.white,size:20,),
-                    label: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      child: Text(
-                        "اتصل الآن",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    onPressed: _callCompany,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           );
-        } else {
-          // أزرار التنقل
-          child = Column(
-            children: [
-              _buildNavigationTile(
-                "العودة إلى سؤال الأمان",
-                "",
-                Icons.question_answer,
-                _backToSecurityQuestion,
-                isDarkMode,
-              ),
-              const SizedBox(height: 10),
-              TextButton.icon(
-                icon: const Icon(Icons.arrow_back),
-                label: const Text("العودة إلى البحث عن المستخدم"),
-                onPressed: _backToFindUser,
-              ),
-            ],
-          );
-        }
-
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.3),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-
-  // بناء عنصر تنقل
-  Widget _buildNavigationTile(
-      String title,
-      String subtitle,
-      IconData icon,
-      VoidCallback onTap,
-      bool isDarkMode,
-      ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isDarkMode ? Colors.grey[800] : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode
-                ? Colors.black.withValues(alpha:0.2)
-                : Colors.grey.withValues(alpha:0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: isDarkMode ? Colors.white : Colors.black87,
-          ),
-        ),
-        subtitle: subtitle.isNotEmpty
-            ? Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-          ),
-        )
-            : null,
-        trailing: Icon(
-          icon,
-          color: isDarkMode ? Colors.grey[400] : ThemeConfig.primaryColor,
-        ),
-        onTap: onTap,
+        },
       ),
     );
   }
 }
 
-// تعداد لخطوات استعادة كلمة المرور
-enum RecoveryStep {
-  findUser,
-  securityQuestion,
-  resetPassword,
-  contactCompany,
-}
+
+
+
+
